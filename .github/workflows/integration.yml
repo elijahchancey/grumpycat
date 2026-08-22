@@ -20,25 +20,27 @@ on:
 permissions:
   contents: read
 
+env:
+  # Newest 4.x line; the 2026.x images exit without a license token.
+  LOCALSTACK_VERSION: "4.14.0"
+
 jobs:
   statemachine:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      localstack:
-        # 4.9.x is the last line that runs without a license token.
-        image: localstack/localstack:4.9.2
-        ports: ["4566:4566"]
-        env:
-          SERVICES: stepfunctions,lambda,dynamodb,iam,sts,logs
-          LAMBDA_DOCKER_NETWORK: bridge
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-        options: >-
-          --health-cmd "curl -sf http://localhost:4566/_localstack/health || exit 1"
-          --health-interval 5s --health-timeout 5s --health-retries 30
     steps:
       - uses: actions/checkout@v4
+      # Not a `services:` container: LocalStack spawns Lambda containers through the Docker
+      # socket, and those must share a network with LocalStack itself. Host networking is
+      # the simplest way to make `localhost:4566` true for the runner, LocalStack and the
+      # Lambda containers alike.
+      - name: start localstack
+        run: |
+          docker run -d --name localstack --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs \
+            -e LAMBDA_DOCKER_NETWORK=host \
+            localstack/localstack:${LOCALSTACK_VERSION}
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -54,3 +56,6 @@ jobs:
       - run: uv run pytest tests/integration -m integration -p no:cacheprovider -v
         env:
           LOCALSTACK_ENDPOINT: http://localhost:4566
+      - name: localstack logs
+        if: failure()
+        run: docker logs localstack 2>&1 | tail -200

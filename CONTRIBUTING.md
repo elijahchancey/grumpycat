@@ -18,7 +18,7 @@ Step Functions definition against LocalStack:
 
 ```sh
 docker run -d --name localstack -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock \
-  -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs localstack/localstack:4.9.2
+  -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs localstack/localstack:4.14.0
 LOCALSTACK_ENDPOINT=http://localhost:4566 uv run pytest tests/integration -m integration
 ```
 
