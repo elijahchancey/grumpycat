@@ -1,0 +1,202 @@
+{
+  "Comment": "One execution per error fingerprint: fix -> park for GitHub events -> shepherd loop -> terminal. JSONata query language. Dollar-brace placeholders are filled by the Terraform module (templatefile).",
+  "QueryLanguage": "JSONata",
+  "StartAt": "Init",
+  "States": {
+    "Init": {
+      "Type": "Pass",
+      "Assign": {
+        "fingerprint": "{% $states.input.fingerprint %}",
+        "max_attempts": "{% $states.input.max_attempts %}",
+        "attempt": "{% $states.input.attempt %}",
+        "task": "{% $states.input.task %}",
+        "brief_md": "{% $states.input.brief_md %}",
+        "pr_number": null
+      },
+      "Next": "Fix"
+    },
+
+    "Fix": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+      "Arguments": {
+        "Cluster": "${cluster_arn}",
+        "TaskDefinition": "${task_definition_arn}",
+        "LaunchType": "FARGATE",
+        "PlatformVersion": "LATEST",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ${subnets_json},
+            "SecurityGroups": ["${security_group_id}"],
+            "AssignPublicIp": "${assign_public_ip}"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "${container_name}",
+              "Environment": [
+                { "Name": "GRUMPYCAT_TASK", "Value": "{% $string($merge([$task, {\"task_token\": $states.context.Task.Token, \"attempt\": $attempt}])) %}" },
+                { "Name": "GRUMPYCAT_BRIEF_MD", "Value": "{% $brief_md %}" }
+              ]
+            }
+          ]
+        }
+      },
+      "TimeoutSeconds": 5400,
+      "HeartbeatSeconds": 1800,
+      "Output": "{% { \"outcome\": $states.result } %}",
+      "Catch": [
+        { "ErrorEquals": ["States.ALL"], "Output": "{% { \"reason\": \"worker task failed: \" & $states.errorOutput.Error } %}", "Next": "FinalizeNeedsHuman" }
+      ],
+      "Next": "AfterRun"
+    },
+
+    "AfterRun": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${lifecycle_lambda_arn}",
+        "Payload": {
+          "op": "after_run",
+          "fingerprint": "{% $fingerprint %}",
+          "outcome": "{% $states.input.outcome %}",
+          "brief": "{% $task.brief %}",
+          "attempt": "{% $attempt %}"
+        }
+      },
+      "Assign": {
+        "pr_number": "{% $states.input.outcome.pr_number ? $states.input.outcome.pr_number : $pr_number %}"
+      },
+      "Output": "{% { \"outcome\": $states.input.outcome } %}",
+      "Retry": [ { "ErrorEquals": ["States.TaskFailed"], "MaxAttempts": 2, "IntervalSeconds": 5 } ],
+      "Next": "RouteOutcome"
+    },
+
+    "RouteOutcome": {
+      "Type": "Choice",
+      "Choices": [
+        { "Condition": "{% $states.input.outcome.status in ['pr_open', 'pushed'] %}", "Next": "Park" }
+      ],
+      "Default": "Done"
+    },
+
+    "Park": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Arguments": {
+        "FunctionName": "${lifecycle_lambda_arn}",
+        "Payload": {
+          "op": "park",
+          "fingerprint": "{% $fingerprint %}",
+          "task_token": "{% $states.context.Task.Token %}"
+        }
+      },
+      "TimeoutSeconds": 1209600,
+      "Output": "{% { \"event\": $states.result } %}",
+      "Catch": [
+        { "ErrorEquals": ["States.Timeout"], "Output": "{% { \"reason\": \"no CI or review activity for 14 days\" } %}", "Next": "FinalizeNeedsHuman" }
+      ],
+      "Next": "RouteEvent"
+    },
+
+    "RouteEvent": {
+      "Type": "Choice",
+      "Choices": [
+        { "Condition": "{% $states.input.event.kind in ['ci_failure', 'review', 'comment'] %}", "Next": "CheckBudget" },
+        { "Condition": "{% $states.input.event.kind = 'ci_success' %}", "Next": "FinalizeReady" },
+        { "Condition": "{% $states.input.event.kind = 'merged' %}", "Next": "FinalizeMerged" },
+        { "Condition": "{% $states.input.event.kind = 'closed' %}", "Next": "FinalizeClosed" }
+      ],
+      "Default": "Park"
+    },
+
+    "CheckBudget": {
+      "Type": "Choice",
+      "Choices": [
+        { "Condition": "{% $attempt < $max_attempts %}", "Next": "BumpAttempt" }
+      ],
+      "Default": "FinalizeNeedsHumanBudget"
+    },
+
+    "BumpAttempt": {
+      "Type": "Pass",
+      "Assign": {
+        "attempt": "{% $attempt + 1 %}",
+        "task": "{% $merge([$task, { \"kind\": \"shepherd\", \"pr_number\": $pr_number, \"trigger\": { \"ci_failure_log\": $states.input.event.ci_failure.excerpt, \"review_findings\": $states.input.event.findings, \"actor\": $states.input.event.actor } }]) %}",
+        "ci_failure": "{% $states.input.event.ci_failure %}"
+      },
+      "Next": "Shepherd"
+    },
+
+    "Shepherd": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+      "Arguments": {
+        "Cluster": "${cluster_arn}",
+        "TaskDefinition": "${task_definition_arn}",
+        "LaunchType": "FARGATE",
+        "PlatformVersion": "LATEST",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ${subnets_json},
+            "SecurityGroups": ["${security_group_id}"],
+            "AssignPublicIp": "${assign_public_ip}"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "${container_name}",
+              "Environment": [
+                { "Name": "GRUMPYCAT_TASK", "Value": "{% $string($merge([$task, {\"task_token\": $states.context.Task.Token, \"attempt\": $attempt}])) %}" },
+                { "Name": "GRUMPYCAT_BRIEF_MD", "Value": "{% $brief_md %}" }
+              ]
+            }
+          ]
+        }
+      },
+      "TimeoutSeconds": 5400,
+      "HeartbeatSeconds": 1800,
+      "Output": "{% { \"outcome\": $states.result } %}",
+      "Catch": [
+        { "ErrorEquals": ["States.ALL"], "Output": "{% { \"reason\": \"shepherd task failed: \" & $states.errorOutput.Error } %}", "Next": "FinalizeNeedsHuman" }
+      ],
+      "Next": "AfterRun"
+    },
+
+    "FinalizeReady": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": { "FunctionName": "${lifecycle_lambda_arn}", "Payload": { "op": "finalize", "fingerprint": "{% $fingerprint %}", "outcome": "ready", "reason": "CI green" } },
+      "Next": "Park",
+      "Comment": "Ready for review, but keep listening: a later review comment or merge still matters."
+    },
+    "FinalizeMerged": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": { "FunctionName": "${lifecycle_lambda_arn}", "Payload": { "op": "finalize", "fingerprint": "{% $fingerprint %}", "outcome": "merged", "reason": null } },
+      "End": true
+    },
+    "FinalizeClosed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": { "FunctionName": "${lifecycle_lambda_arn}", "Payload": { "op": "finalize", "fingerprint": "{% $fingerprint %}", "outcome": "closed", "reason": "PR closed without merging" } },
+      "End": true
+    },
+    "FinalizeNeedsHumanBudget": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": { "FunctionName": "${lifecycle_lambda_arn}", "Payload": { "op": "finalize", "fingerprint": "{% $fingerprint %}", "outcome": "needs_human", "reason": "{% 'attempt budget (' & $string($max_attempts) & ') exhausted' %}" } },
+      "End": true
+    },
+    "FinalizeNeedsHuman": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": { "FunctionName": "${lifecycle_lambda_arn}", "Payload": { "op": "finalize", "fingerprint": "{% $fingerprint %}", "outcome": "needs_human", "reason": "{% $states.input.reason %}" } },
+      "End": true
+    },
+
+    "Done": { "Type": "Succeed" }
+  }
+}

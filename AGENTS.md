@@ -55,7 +55,7 @@ src/grumpycat/engines    built-in engines (claude, codex, ...)
 src/grumpycat/outputs    built-in outputs (github, slack, ...)
 src/grumpycat/ci         built-in CI readers (buildkite, github_actions) used by the shepherd
 src/grumpycat/contrib    optional in-tree plugins shipped as extras
-src/grumpycat/lambda     Lambda handlers (edges only; no long work here)
+src/grumpycat/handlers    Lambda handlers (edges only; no long work here)
 src/grumpycat/worker     Fargate entrypoint (clone → engine → commit → push → callback)
 statemachine/            Step Functions definition
 docker/                  Lambda, worker and example client Dockerfiles

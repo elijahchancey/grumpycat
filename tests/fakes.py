@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,10 @@ from grumpycat.core.models import (
     EngineResult,
     ErrorEvent,
     Evidence,
+    Exception_,
     IssueState,
+    StackFrame,
+    Transition,
     WorkerTask,
 )
 from grumpycat.plugins.spec import (
@@ -47,10 +51,36 @@ class FakeInput(InputPlugin):
         return headers.get("x-fake-sig") == "ok"
 
     def parse(self, payload: dict[str, Any]) -> ErrorEvent | None:
-        return None
+        """Minimal shape: {"fp": "...", "transition": "new", "service": "api", "env": "prod"}."""
+        if "fp" not in payload:
+            return None
+        return ErrorEvent(
+            source="fake_in",
+            fingerprint=f"fake:{payload['fp']}",
+            transition=Transition(payload.get("transition", "new")),
+            service=payload.get("service", "api"),
+            env=payload.get("env", "prod"),
+            title=payload.get("title", "NoMethodError: boom"),
+            occurred_at=datetime(2026, 8, 21, 3, 14, tzinfo=UTC),
+            tags={"level": payload.get("level", "error")},
+        )
 
     def enrich(self, event: ErrorEvent) -> Evidence:
-        return Evidence()
+        """Configurable through the fingerprint so tests can steer triage without mocks."""
+        if "infra" in event.fingerprint:
+            return Evidence(signature="ThrottlingException: Rate exceeded", event_count=50)
+        if "bare" in event.fingerprint:
+            return Evidence()
+        return Evidence(
+            exception=Exception_(
+                type="NoMethodError",
+                value="undefined method `email' for nil",
+                frames=[StackFrame(filename="app/services/notifier.rb", lineno=42, in_app=True)],
+            ),
+            signature="NoMethodError: undefined method `email' for nil",
+            event_count=412,
+            user_count=57,
+        )
 
 
 class FakeEventInput(InputPlugin):
@@ -62,7 +92,17 @@ class FakeEventInput(InputPlugin):
     )
 
     def parse(self, payload: dict[str, Any]) -> ErrorEvent | None:
-        return None
+        if payload.get("detail-type") != "ECS Task State Change":
+            return None
+        return ErrorEvent(
+            source="fake_events",
+            fingerprint=f"ecs:{payload['detail']['taskArn']}",
+            transition=Transition.NEW,
+            service="api",
+            env="prod",
+            title="ECS task exited",
+            occurred_at=datetime(2026, 8, 22, tzinfo=UTC),
+        )
 
     def enrich(self, event: ErrorEvent) -> Evidence:
         return Evidence()
