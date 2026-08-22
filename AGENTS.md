@@ -19,6 +19,8 @@ outputs all implement it, and third parties build against it.
 - **Type-checked and linted**: `uv run ruff check src tests`, `uv run ruff format src tests`,
   `uv run mypy`. All three must pass before you consider a change done. mypy runs in strict
   mode; do not add `# type: ignore` without a reason in the comment.
+- **Pre-commit** hooks (`uv run pre-commit install`) run ruff and mypy on commit; never bypass
+  them with `--no-verify`.
 - **Tests**: `uv run pytest`. New behaviour needs a test. Webhook parsers are tested against
   recorded payloads in `tests/fixtures/` — scrub anything personal before committing a
   fixture (emails, IPs, user ids, cookies, auth headers).
