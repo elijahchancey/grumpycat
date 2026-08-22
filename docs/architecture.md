@@ -42,3 +42,25 @@ pieces land.
 Actor allow-list on GitHub events; the bot ignores its own comments; events tagged
 `service:grumpycat` are dropped at ingress; one execution per fingerprint; gated mode requires
 a Slack approval before any fix run.
+
+## Lambda environment
+
+| Variable | Set by | Used by |
+|---|---|---|
+| `GRUMPYCAT_CONFIG_PARAM` (or inline `GRUMPYCAT_CONFIG`) | module | all handlers |
+| `GRUMPYCAT_SECRET_ARNS` — JSON `{ENV_VAR: arn}` (SSM or Secrets Manager) | module | all handlers |
+| `GRUMPYCAT_TABLE` | module | all handlers |
+| `GRUMPYCAT_STATE_MACHINE` | module | triage, Slack approve |
+| `GRUMPYCAT_TRIAGE_FUNCTION` | module | router |
+| `GRUMPYCAT_BOT_LOGIN` (default `grumpycat[bot]`) | module | github hook |
+
+Handlers: `router` (`/in/{input}` + EventBridge), `triage`, `github_hook` (`/hooks/github`),
+`lifecycle` (`park` / `after_run` / `finalize`, called by the state machine). The worker gets
+`GRUMPYCAT_TASK` (a `WorkerTask` JSON, including the Step Functions task token) and
+`GRUMPYCAT_BRIEF_MD` as container overrides.
+
+## DynamoDB
+
+Single table, `pk` hash key, two GSIs: `branch` (hash `branch` = `owner/name#branch`) and
+`opened_on` (hash `opened_on` = `owner/name#YYYY-MM-DD`, keys-only). Items: `ISSUE#<fingerprint>`
+(state document, `wait_token`, `pending_events`) and `PR#<owner/name>#<number>` → fingerprint.
