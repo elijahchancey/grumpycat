@@ -18,6 +18,15 @@ default.
 
 ## The quality gate
 
+Install the pre-commit hooks once — they run ruff (lint + format), mypy and a few hygiene
+checks (no private keys, no large files, no direct commits to `main`) on every commit:
+
+```sh
+uv run pre-commit install
+```
+
+`ruff format` is the formatter (Black-compatible); there is no separate Black step.
+
 Every PR must pass, in CI and locally:
 
 ```sh

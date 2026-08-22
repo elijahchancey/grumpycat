@@ -52,6 +52,7 @@ dev = [
   "types-pyyaml",
   "boto3-stubs[dynamodb,ecs,ssm,stepfunctions,secretsmanager]>=1.40",
   "moto[dynamodb,ssm]>=5.1",
+  "pre-commit>=4.2",
 ]
 
 [build-system]
