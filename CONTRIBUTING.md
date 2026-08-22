@@ -128,8 +128,9 @@ straight to a PR for bug fixes.
 
 ## Releases
 
-Semver tags (`vX.Y.Z`) build and publish the Lambda and worker images to ECR Public and are
-recorded in `CHANGELOG.md` with image digests. The Terraform module is versioned separately
+Semver tags (`vX.Y.Z`) run `.github/workflows/release.yml`: multi-arch Lambda and worker
+images are built, pushed to Amazon ECR Public via OIDC, signed with cosign (keyless), and a
+draft GitHub release lists the digests. `CHANGELOG.md` records them. The Terraform module is versioned separately
 and pins a Grumpycat version it was tested with.
 
 ## Code of conduct

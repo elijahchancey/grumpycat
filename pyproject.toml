@@ -21,11 +21,16 @@ dependencies = [
   "boto3>=1.40",
   "httpx>=0.28",
   "aws-lambda-powertools>=3.12",
+  "pyjwt>=2.13.0",
+  "cryptography>=50.0.0",
 ]
 
 [project.optional-dependencies]
 # In-tree contrib plugins ship as extras; the published images install "all".
 all = []
+
+[project.scripts]
+grumpycat-worker = "grumpycat.worker.main:main"
 
 [project.urls]
 Homepage = "https://github.com/elijahchancey/grumpycat"
@@ -38,6 +43,8 @@ sentry = "grumpycat.inputs.sentry:SentryInput"
 datadog = "grumpycat.inputs.datadog:DatadogInput"
 
 [project.entry-points."grumpycat.engines"]
+claude = "grumpycat.engines.claude:ClaudeEngine"
+codex = "grumpycat.engines.codex:CodexEngine"
 
 [project.entry-points."grumpycat.outputs"]
 
