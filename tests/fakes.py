@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 from grumpycat.core.models import (
     Brief,
+    CIFailure,
     EngineResult,
     ErrorEvent,
     Evidence,
@@ -17,6 +18,7 @@ from grumpycat.core.models import (
     WorkerTask,
 )
 from grumpycat.plugins.spec import (
+    CIPlugin,
     EnginePlugin,
     InputPlugin,
     OutputPlugin,
@@ -102,3 +104,10 @@ class OldApi(EnginePlugin):
 
 class NoSpec:
     pass
+
+
+class FakeCI(CIPlugin):
+    spec = PluginSpec(name="fake_ci", kind=PluginKind.CI, required_secrets=("CI_TOKEN",))
+
+    def fetch_failure(self, repo: str, sha: str, context: str, target_url: str | None) -> CIFailure:
+        return CIFailure(excerpt=f"{repo}@{sha} {context} failed")

@@ -26,6 +26,7 @@ from pydantic import ValidationError
 from grumpycat import PLUGIN_API_VERSION
 from grumpycat.core.config import Config
 from grumpycat.plugins.spec import (
+    CIPlugin,
     EnginePlugin,
     InputPlugin,
     OutputPlugin,
@@ -41,6 +42,7 @@ GROUPS: dict[PluginKind, str] = {
     PluginKind.INPUT: "grumpycat.inputs",
     PluginKind.ENGINE: "grumpycat.engines",
     PluginKind.OUTPUT: "grumpycat.outputs",
+    PluginKind.CI: "grumpycat.ci",
 }
 
 
@@ -128,6 +130,11 @@ class Registry:
             n: build(PluginKind.OUTPUT, n, s, secrets, cls=OutputPlugin)
             for n, s in config.outputs.items()
         }
+        self.ci: CIPlugin | None = (
+            build(PluginKind.CI, config.ci.provider, config.ci.options, secrets, cls=CIPlugin)
+            if config.ci
+            else None
+        )
         self._engines: dict[str, EnginePlugin] = {}
         wanted: Iterable[str] = set(config.engines) | {r.engine for r in config.repos.values()}
         for n in wanted:

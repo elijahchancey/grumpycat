@@ -14,13 +14,14 @@ from tests.conftest import MINIMAL_YAML
 
 Register = Callable[[PluginKind, dict[str, Any]], None]
 
-SECRETS = {"FAKE_TOKEN": "t"}
+SECRETS = {"FAKE_TOKEN": "t", "CI_TOKEN": "c"}
 
 
 def _register_all(register: Register) -> None:
     register(PluginKind.INPUT, {"fake_in": fakes.FakeInput, "fake_events": fakes.FakeEventInput})
     register(PluginKind.ENGINE, {"fake_engine": fakes.FakeEngine})
     register(PluginKind.OUTPUT, {"fake_out": fakes.FakeOutput})
+    register(PluginKind.CI, {"fake_ci": fakes.FakeCI})
 
 
 def test_registry_builds_everything_the_config_names(fake_entry_points: Register) -> None:
@@ -95,3 +96,15 @@ def test_event_patterns_expose_eventbridge_inputs(fake_entry_points: Register) -
     assert reg.inputs["fake_events"].verify({}, b"") is True  # trusted by the rule
     assert reg.inputs["fake_in"].verify({"x-fake-sig": "ok"}, b"") is True
     assert reg.inputs["fake_in"].verify({}, b"") is False
+
+
+def test_ci_plugin_is_optional_and_built_from_config(fake_entry_points: Register) -> None:
+    _register_all(fake_entry_points)
+    assert Registry(load_config(MINIMAL_YAML), SECRETS).ci is None
+    cfg = load_config(MINIMAL_YAML + "ci:\n  provider: fake_ci\n")
+    reg = Registry(cfg, SECRETS)
+    assert reg.ci is not None
+    failure = reg.ci.fetch_failure("acme/api", "abc123", "buildkite/api", None)
+    assert failure.excerpt == "acme/api@abc123 buildkite/api failed"
+    with pytest.raises(PluginError, match="needs secrets"):
+        Registry(cfg, {"FAKE_TOKEN": "t"})

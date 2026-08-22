@@ -19,7 +19,7 @@ repos:
   acme/api:
     engine: fake_engine
     default_branch: master
-    buildkite_pipeline: acme/api
+    ci_pipeline: acme/api
     services: [api, api-worker]
   acme/frontend:
     engine: fake_engine

@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from grumpycat import PLUGIN_API_VERSION
 from grumpycat.core.models import (
     Brief,
+    CIFailure,
     EngineResult,
     ErrorEvent,
     Evidence,
@@ -36,6 +37,7 @@ class PluginKind(StrEnum):
     INPUT = "input"
     ENGINE = "engine"
     OUTPUT = "output"
+    CI = "ci"
 
 
 class Trigger(StrEnum):
@@ -118,3 +120,16 @@ class OutputPlugin(Plugin):
         self, state: IssueState, previous: IssueState | None, brief: Brief | None
     ) -> IssueState:
         """May return an updated state (e.g. with `pr_number` filled in)."""
+
+
+class CIPlugin(Plugin):
+    """Knows how to read the CI system that builds the target repos (Buildkite, GitHub Actions).
+
+    The shepherd learns *that* a build failed from GitHub `status` / `check_run` events; this
+    plugin turns that into *why* by fetching the failing job's log. One CI plugin per
+    deployment, selected by `ci:` in `grumpycat.yaml`.
+    """
+
+    @abstractmethod
+    def fetch_failure(self, repo: str, sha: str, context: str, target_url: str | None) -> CIFailure:
+        """`context` / `target_url` come from the GitHub commit status or check run."""

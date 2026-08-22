@@ -39,6 +39,8 @@ Issues = "https://github.com/elijahchancey/grumpycat/issues"
 
 [project.entry-points."grumpycat.outputs"]
 
+[project.entry-points."grumpycat.ci"]
+
 [dependency-groups]
 dev = [
   "pytest>=8.4",

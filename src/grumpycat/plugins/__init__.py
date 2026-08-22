@@ -2,6 +2,7 @@
 
 from grumpycat.plugins.registry import PluginError, Registry, build, discover
 from grumpycat.plugins.spec import (
+    CIPlugin,
     EmptyConfig,
     EnginePlugin,
     InputPlugin,
@@ -14,6 +15,7 @@ from grumpycat.plugins.spec import (
 )
 
 __all__ = [
+    "CIPlugin",
     "EmptyConfig",
     "EnginePlugin",
     "InputPlugin",

@@ -40,11 +40,18 @@ class Policy(_Model):
     freeze: bool = Field(default=False, description="Triage only; open nothing")
 
 
+class CIConfig(_Model):
+    provider: str = Field(description="CI plugin name, e.g. 'buildkite' or 'github_actions'")
+    options: dict[str, Any] = Field(default_factory=dict, description="That plugin's config")
+
+
 class RepoConfig(_Model):
     engine: str
     model: str | None = None
     default_branch: str = "main"
-    buildkite_pipeline: str | None = None
+    ci_pipeline: str | None = Field(
+        default=None, description="Pipeline identifier in the CI provider, e.g. 'acme/api'"
+    )
     prepare: str | None = None
     worker_image: str | None = None
     labels: list[str] = Field(default_factory=lambda: ["grumpycat"])
@@ -59,7 +66,7 @@ class RepoConfig(_Model):
             engine=self.engine,
             model=self.model,
             default_branch=self.default_branch,
-            buildkite_pipeline=self.buildkite_pipeline,
+            ci_pipeline=self.ci_pipeline,
             prepare=self.prepare,
             worker_image=self.worker_image,
             labels=self.labels,
@@ -71,6 +78,7 @@ class Config(_Model):
     inputs: dict[str, dict[str, Any]] = Field(default_factory=dict)
     engines: dict[str, dict[str, Any]] = Field(default_factory=dict)
     outputs: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    ci: CIConfig | None = Field(default=None, description="How to read the target repos' CI")
     repos: dict[str, RepoConfig] = Field(default_factory=dict)
     policy: Policy = Field(default_factory=Policy)
     reviewer_allowlist: list[str] = Field(
