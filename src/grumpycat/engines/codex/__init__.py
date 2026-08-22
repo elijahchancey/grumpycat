@@ -5,13 +5,20 @@ default), a turn/time budget, and the brief's instructions. Codex has no per-com
 list like Claude Code, so test-runner avoidance is instruction-based here; the worker still
 never commits anything the brief forbade.
 
-Auth: OPENAI_API_KEY. Usage (tokens) is reported from the JSONL event stream; cost in USD is
-not computed because list prices vary by model and plan.
+Auth (`auth:` in the engine config):
+  api_key  OPENAI_API_KEY in the secrets map — billed per token.
+  chatgpt  CODEX_AUTH_JSON in the secrets map: the contents of `~/.codex/auth.json` after
+           `codex login` on a ChatGPT Plus/Pro/Team/Enterprise plan. Written to a private
+           CODEX_HOME for the run and removed afterwards. Tied to one person's plan and its
+           limits; refresh tokens rotate, so expect to re-export it occasionally.
+Usage (tokens) is reported from the JSONL event stream; cost in USD is not computed because
+list prices vary by model and plan.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Literal
 
@@ -26,6 +33,7 @@ class CodexConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     model: str | None = None
+    auth: Literal["api_key", "chatgpt"] = "api_key"
     sandbox: Literal["read-only", "workspace-write", "danger-full-access"] = "workspace-write"
     timeout_minutes: int = Field(default=40, ge=1, le=180)
     network: bool = Field(default=False, description="Allow network inside the sandbox")
@@ -45,20 +53,44 @@ class CodexEngine(EnginePlugin):
         name="codex",
         kind=PluginKind.ENGINE,
         config_schema=CodexConfig,
-        required_secrets=("OPENAI_API_KEY",),
+        required_secrets=(),  # OPENAI_API_KEY or CODEX_AUTH_JSON; checked in preflight
         optional_tools=("codex",),
     )
     config: CodexConfig
 
     def preflight(self, workdir: Path) -> list[str]:
+        problems = []
         if _cli.which(self.config.binary) is None:
-            return [f"`{self.config.binary}` not on PATH in the worker image"]
-        return []
+            problems.append(f"`{self.config.binary}` not on PATH in the worker image")
+        key = "CODEX_AUTH_JSON" if self.config.auth == "chatgpt" else "OPENAI_API_KEY"
+        if not self.secrets.get(key):
+            problems.append(f"{key} missing from the secrets map (auth: {self.config.auth})")
+        if self.config.auth == "chatgpt":
+            try:
+                json.loads(self.secrets.get("CODEX_AUTH_JSON") or "{}")
+            except json.JSONDecodeError:
+                problems.append("CODEX_AUTH_JSON is not valid JSON (export ~/.codex/auth.json)")
+        return problems
 
-    def _env(self) -> dict[str, str]:
-        env = dict(self.secrets)
-        env["OPENAI_API_KEY"] = self.secrets["OPENAI_API_KEY"]
+    def _env(self, codex_home: Path) -> dict[str, str]:
+        env = {k: v for k, v in self.secrets.items() if k != "CODEX_AUTH_JSON"}
+        env["CODEX_HOME"] = str(codex_home)
+        if self.config.auth == "chatgpt":
+            env.pop("OPENAI_API_KEY", None)  # an API key would take precedence over the login
+        else:
+            env["OPENAI_API_KEY"] = self.secrets["OPENAI_API_KEY"]
         return env
+
+    def _prepare_home(self, workdir: Path) -> Path:
+        """A per-run CODEX_HOME so nothing persists between runs and no shared ~/.codex is
+        touched. With `auth: chatgpt` the exported auth.json is written there (0600)."""
+        home = _cli.ensure_scratch(workdir) / "codex-home"
+        home.mkdir(mode=0o700, exist_ok=True)
+        if self.config.auth == "chatgpt":
+            auth = home / "auth.json"
+            auth.write_text(self.secrets["CODEX_AUTH_JSON"])
+            auth.chmod(0o600)
+        return home
 
     def argv(self, task: WorkerTask, last_message: Path) -> list[str]:
         model = task.brief.target.model or self.config.model
@@ -81,12 +113,16 @@ class CodexEngine(EnginePlugin):
     def run(self, task: WorkerTask, workdir: Path, brief_md: str) -> EngineResult:
         _cli.write_brief(workdir, brief_md)
         last = workdir / _cli.BRIEF_DIR / "last_message.txt"
-        res = _cli.run_cli(
-            self.argv(task, last),
-            cwd=workdir,
-            env=self._env(),
-            timeout_s=self.config.timeout_minutes * 60,
-        )
+        home = self._prepare_home(workdir)
+        try:
+            res = _cli.run_cli(
+                self.argv(task, last),
+                cwd=workdir,
+                env=self._env(home),
+                timeout_s=self.config.timeout_minutes * 60,
+            )
+        finally:
+            shutil.rmtree(home, ignore_errors=True)
         usage = _usage_from_jsonl(res.stdout)
         text = last.read_text() if last.exists() else _last_agent_message(res.stdout)
         changed = _cli.changed_paths(workdir)
