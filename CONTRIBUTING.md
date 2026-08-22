@@ -13,8 +13,16 @@ uv run pytest
 ```
 
 You need Python 3.13+ and [`uv`](https://docs.astral.sh/uv/). Nothing else is required for
-unit tests. Integration tests (marked `integration`) need real credentials and are skipped by
-default.
+unit tests. Integration tests (marked `integration`, excluded by default) execute the real
+Step Functions definition against LocalStack:
+
+```sh
+docker run -d --name localstack -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock \
+  -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs localstack/localstack:4.9.2
+LOCALSTACK_ENDPOINT=http://localhost:4566 uv run pytest tests/integration -m integration
+```
+
+CI runs them (`integration.yml`) whenever the state machine, the handlers or the tests change.
 
 ## The quality gate
 
