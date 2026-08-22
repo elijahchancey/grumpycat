@@ -1,0 +1,88 @@
+[project]
+name = "grumpycat"
+version = "0.1.0"
+description = "Turns production errors into draft pull requests that follow each repo's own agent rules, then shepherds them to green."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.13"
+authors = [{ name = "Elijah Chancey" }]
+keywords = ["sentry", "datadog", "claude-code", "codex", "sre", "automation", "pull-request"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Bug Tracking",
+]
+dependencies = [
+  "pydantic>=2.11",
+  "pyyaml>=6.0",
+  "boto3>=1.40",
+  "httpx>=0.28",
+  "aws-lambda-powertools>=3.12",
+]
+
+[project.optional-dependencies]
+# In-tree contrib plugins ship as extras; the published images install "all".
+all = []
+
+[project.urls]
+Homepage = "https://github.com/elijahchancey/grumpycat"
+Issues = "https://github.com/elijahchancey/grumpycat/issues"
+
+# Plugin registry. Built-ins register here as they land; third-party packages use the
+# same three groups. See docs/plugins.md.
+[project.entry-points."grumpycat.inputs"]
+
+[project.entry-points."grumpycat.engines"]
+
+[project.entry-points."grumpycat.outputs"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4",
+  "pytest-cov>=6.0",
+  "ruff>=0.12",
+  "mypy>=1.17",
+  "types-pyyaml",
+  "boto3-stubs[dynamodb,ecs,ssm,stepfunctions,secretsmanager]>=1.40",
+  "moto[dynamodb,ssm]>=5.1",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grumpycat"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "N", "ANN", "S"]
+ignore = ["ANN401", "S101"]  # Any is fine at plugin boundaries; asserts are fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "S"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+packages = ["grumpycat"]
+# `build(..., cls=InputPlugin)` passes abstract bases as `type[P]` for isinstance narrowing; mypy
+# flags that as if we might instantiate them (python/mypy#4717). We never do.
+disable_error_code = ["type-abstract"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = ["integration: needs real AWS/GitHub credentials"]
+
+[tool.coverage.run]
+source = ["grumpycat"]
