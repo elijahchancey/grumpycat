@@ -131,7 +131,7 @@ class OutputPlugin(Plugin):
 class CIPlugin(Plugin):
     """Knows how to read the CI system that builds the target repos (Buildkite, GitHub Actions).
 
-    The shepherd learns *that* a build failed from GitHub `status` / `check_run` events; this
+    The groomer learns *that* a build failed from GitHub `status` / `check_run` events; this
     plugin turns that into *why* by fetching the failing job's log. One CI plugin per
     deployment, selected by `ci:` in `grumpycat.yaml`.
     """

@@ -7,7 +7,7 @@ say so explicitly here rather than in a second file.
 
 ## What this project is
 
-Grumpycat turns production errors into draft pull requests and shepherds them to green. Read
+Grumpycat turns production errors into draft pull requests and grooms them to green. Read
 `README.md` first, then `docs/architecture.md`. The plugin contract in
 `src/grumpycat/plugins/spec.py` is the most important file in the tree: inputs, engines and
 outputs all implement it, and third parties build against it.
@@ -55,7 +55,7 @@ src/grumpycat/plugins    the contract (spec.py) and the registry
 src/grumpycat/inputs     built-in inputs (sentry, datadog, ...)
 src/grumpycat/engines    built-in engines (claude, codex, ...)
 src/grumpycat/outputs    built-in outputs (github, slack, ...)
-src/grumpycat/ci         built-in CI readers (buildkite, github_actions) used by the shepherd
+src/grumpycat/ci         built-in CI readers (buildkite, github_actions) used by the groomer
 src/grumpycat/contrib    optional in-tree plugins shipped as extras
 src/grumpycat/handlers    Lambda handlers (edges only; no long work here)
 src/grumpycat/worker     Fargate entrypoint (clone → engine → commit → push → callback)

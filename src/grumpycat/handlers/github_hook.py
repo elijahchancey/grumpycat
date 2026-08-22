@@ -28,7 +28,7 @@ from grumpycat.core.models import AwaitedEvent, CIFailure, IssueState, IssueStat
 from grumpycat.handlers import http
 from grumpycat.handlers.runtime import Runtime, logger, runtime
 
-ACTIVE = {IssueStatus.PR_OPEN, IssueStatus.SHEPHERDING, IssueStatus.FIXING}
+ACTIVE = {IssueStatus.PR_OPEN, IssueStatus.GROOMING, IssueStatus.FIXING}
 FAILED = {"failure", "error", "cancelled", "timed_out", "action_required"}
 
 

@@ -31,7 +31,7 @@ TERMINAL = {IssueStatus.MERGED, IssueStatus.CLOSED, IssueStatus.RCA_ONLY, IssueS
 STARTED = {
     IssueStatus.FIXING,
     IssueStatus.PR_OPEN,
-    IssueStatus.SHEPHERDING,
+    IssueStatus.GROOMING,
     IssueStatus.READY,
     IssueStatus.MERGED,
     IssueStatus.CLOSED,

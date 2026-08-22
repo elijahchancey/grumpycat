@@ -1,7 +1,7 @@
 """GitHub output: the PR lifecycle, driven by issue-state transitions.
 
   PR_OPEN (no pr_number yet)  open a draft PR from the pushed branch, label it
-  SHEPHERDING (after a push) comment what was pushed; reply to and resolve the review
+  GROOMING (after a push) comment what was pushed; reply to and resolve the review
                               threads that push addressed; post the engine's report for
                               anything it declined
   READY                       mark ready for review, comment
@@ -75,11 +75,7 @@ class GitHubOutput(OutputPlugin):
         prev_status = previous.status if previous else None
         if state.status is IssueStatus.PR_OPEN and state.pr_number is None and state.branch:
             return self._open_pr(state, brief or state.brief)
-        if (
-            state.status is IssueStatus.SHEPHERDING
-            and state.pr_number
-            and _new_push(state, previous)
-        ):
+        if state.status is IssueStatus.GROOMING and state.pr_number and _new_push(state, previous):
             self._after_push(state)
         elif state.status is IssueStatus.READY and prev_status is not IssueStatus.READY:
             self._ready(state)
@@ -247,7 +243,7 @@ def _new_push(state: IssueState, previous: IssueState | None) -> bool:
     return (
         state.last_outcome.pushed_sha != prev_sha
         or previous is None
-        or previous.status is not IssueStatus.SHEPHERDING
+        or previous.status is not IssueStatus.GROOMING
     )
 
 

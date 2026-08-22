@@ -366,7 +366,7 @@ def test_after_run_and_finalize(rt: Runtime) -> None:
     assert rt.store.get_by_pr("acme/api", 12) is not None
 
     # first push with no PR yet -> PR_OPEN (the GitHub output opens the draft PR on that
-    # transition); a later push on a tracked PR -> SHEPHERDING
+    # transition); a later push on a tracked PR -> GROOMING
     rt.store.put(make_state(status=IssueStatus.FIXING, branch="grumpycat/fake-abc"))
     pushed = FixOutcome(status="pushed", branch="grumpycat/fake-abc", summary="v1")
     lifecycle.handler(
@@ -381,7 +381,7 @@ def test_after_run_and_finalize(rt: Runtime) -> None:
         {"op": "after_run", "fingerprint": "fake:1", "outcome": pushed.model_dump(mode="json")},
         CTX,
     )
-    assert rt.store.get("fake:1").status is IssueStatus.SHEPHERDING  # type: ignore[union-attr]
+    assert rt.store.get("fake:1").status is IssueStatus.GROOMING  # type: ignore[union-attr]
 
     declined = FixOutcome(status="declined", summary="could not reproduce")
     lifecycle.handler(

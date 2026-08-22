@@ -1,5 +1,5 @@
 {
-  "Comment": "One execution per error fingerprint: fix -> park for GitHub events -> shepherd loop -> terminal. JSONata query language. Dollar-brace placeholders are filled by the Terraform module (templatefile).",
+  "Comment": "One execution per error fingerprint: fix -> park for GitHub events -> groom loop -> terminal. JSONata query language. Dollar-brace placeholders are filled by the Terraform module (templatefile).",
   "QueryLanguage": "JSONata",
   "StartAt": "Init",
   "States": {
@@ -123,13 +123,13 @@
       "Type": "Pass",
       "Assign": {
         "attempt": "{% $attempt + 1 %}",
-        "task": "{% $merge([$task, { \"kind\": \"shepherd\", \"pr_number\": $pr_number, \"trigger\": { \"ci_failure_log\": $states.input.event.ci_failure.excerpt, \"review_findings\": $states.input.event.findings, \"comment_ids\": $states.input.event.comment_ids, \"actor\": $states.input.event.actor } }]) %}",
+        "task": "{% $merge([$task, { \"kind\": \"groom\", \"pr_number\": $pr_number, \"trigger\": { \"ci_failure_log\": $states.input.event.ci_failure.excerpt, \"review_findings\": $states.input.event.findings, \"comment_ids\": $states.input.event.comment_ids, \"actor\": $states.input.event.actor } }]) %}",
         "ci_failure": "{% $states.input.event.ci_failure %}"
       },
-      "Next": "Shepherd"
+      "Next": "Groom"
     },
 
-    "Shepherd": {
+    "Groom": {
       "Type": "Task",
       "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
       "Arguments": {
@@ -160,7 +160,7 @@
       "HeartbeatSeconds": 1800,
       "Output": "{% { \"outcome\": $states.result } %}",
       "Catch": [
-        { "ErrorEquals": ["States.ALL"], "Output": "{% { \"reason\": \"shepherd task failed: \" & $states.errorOutput.Error } %}", "Next": "FinalizeNeedsHuman" }
+        { "ErrorEquals": ["States.ALL"], "Output": "{% { \"reason\": \"groom task failed: \" & $states.errorOutput.Error } %}", "Next": "FinalizeNeedsHuman" }
       ],
       "Next": "AfterRun"
     },
