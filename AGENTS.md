@@ -39,6 +39,12 @@ outputs all implement it, and third parties build against it.
   are injected at runtime by the Terraform module. Never log a secret, never write one to
   disk.
 
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same three commands as the skill above
+on Python 3.13 and 3.14. The `ok` job is the single required status. Keep the workflow free of
+anything organisation-specific; this is a public repository.
+
 ## Layout
 
 ```
@@ -47,6 +53,7 @@ src/grumpycat/plugins    the contract (spec.py) and the registry
 src/grumpycat/inputs     built-in inputs (sentry, datadog, ...)
 src/grumpycat/engines    built-in engines (claude, codex, ...)
 src/grumpycat/outputs    built-in outputs (github, slack, ...)
+src/grumpycat/ci         built-in CI readers (buildkite, github_actions) used by the shepherd
 src/grumpycat/contrib    optional in-tree plugins shipped as extras
 src/grumpycat/lambda     Lambda handlers (edges only; no long work here)
 src/grumpycat/worker     Fargate entrypoint (clone → engine → commit → push → callback)

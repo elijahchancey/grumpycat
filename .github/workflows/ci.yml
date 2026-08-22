@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: ${{ matrix.check }} (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.13", "3.14"]
+        check: [lint, types, tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv sync --frozen --group dev
+      - name: lint
+        if: matrix.check == 'lint'
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+      - name: types
+        if: matrix.check == 'types'
+        run: uv run mypy
+      - name: tests
+        if: matrix.check == 'tests'
+        run: uv run pytest --junitxml=junit-${{ matrix.python }}.xml --cov --cov-report=term-missing
+      - uses: actions/upload-artifact@v4
+        if: matrix.check == 'tests' && always()
+        with:
+          name: junit-${{ matrix.python }}
+          path: junit-${{ matrix.python }}.xml
+
+  # Single required status for branch protection; individual matrix jobs can be added later.
+  ok:
+    if: always()
+    needs: [checks]
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.checks.result }}" = "success"

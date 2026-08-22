@@ -111,7 +111,7 @@ class RepoTarget(_Model):
     engine: str
     model: str | None = None
     default_branch: str = "main"
-    buildkite_pipeline: str | None = Field(default=None, description="org/pipeline slug")
+    ci_pipeline: str | None = Field(default=None, description="Pipeline id in the CI provider")
     prepare: str | None = Field(default=None, description="Shell run before the engine")
     worker_image: str | None = Field(default=None, description="Escape hatch: per-repo image")
     labels: list[str] = Field(default_factory=lambda: ["grumpycat"])
@@ -163,6 +163,15 @@ class EngineResult(_Model):
     cost_usd: float | None = None
     turns: int | None = None
     raw: dict[str, Any] = Field(default_factory=dict, description="Engine-specific metadata")
+
+
+class CIFailure(_Model):
+    """What a CI plugin could recover about a failed build, for the shepherd prompt."""
+
+    build_url: HttpUrl | None = None
+    job_name: str | None = None
+    excerpt: str = Field(description="Tail of the failing job's log, already size-capped")
+    truncated: bool = False
 
 
 class IssueStatus(StrEnum):

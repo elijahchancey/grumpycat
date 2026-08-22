@@ -56,13 +56,14 @@ The registry discovers it through an entry point, validates its config section a
 about any `optional_tools` missing from `PATH`, and only then constructs it. Read
 `src/grumpycat/plugins/spec.py`; it is short and it is the contract.
 
-### The three kinds
+### The four kinds
 
 | Kind | Base class | Must implement | Entry-point group |
 |---|---|---|---|
 | Input | `InputPlugin` | `parse(payload) -> ErrorEvent \| None`, `enrich(event) -> Evidence`; HTTP inputs also `verify(headers, body)` | `grumpycat.inputs` |
 | Engine | `EnginePlugin` | `run(task, workdir, brief_md) -> EngineResult` | `grumpycat.engines` |
 | Output | `OutputPlugin` | `on_transition(state, previous, brief) -> IssueState` | `grumpycat.outputs` |
+| CI | `CIPlugin` | `fetch_failure(repo, sha, context, target_url) -> CIFailure` | `grumpycat.ci` |
 
 Inputs declare how they are triggered: `Trigger.HTTP` (a `POST /in/<name>` route the Terraform
 module exposes; you verify the signature) or `Trigger.EVENTBRIDGE` (you supply an
@@ -112,7 +113,8 @@ straight to a PR for bug fixes.
 - Title: `type(scope): what it does` (`feat(inputs): datadog log monitors`).
 - Body: **What**, **Why it matters**, **Tests** (name them), **Not in scope**. Skip headings
   you have nothing real to put under. No narration of how you got here.
-- CI runs on Buildkite. A green build and one maintainer approval merges it; maintainers merge,
+- CI is GitHub Actions (`.github/workflows/ci.yml`): lint, types and tests on Python 3.13 and
+  3.14. A green `ok` check and one maintainer approval merges it; maintainers merge,
   bots don't.
 
 ## Releases

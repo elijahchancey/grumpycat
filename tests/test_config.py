@@ -50,7 +50,7 @@ def test_to_target_carries_everything() -> None:
     t = cfg.repos["acme/api"].to_target("acme/api")
     assert t.full_name == "acme/api"
     assert t.engine == "fake_engine"
-    assert t.buildkite_pipeline == "acme/api"
+    assert t.ci_pipeline == "acme/api"
     assert t.labels == ["grumpycat"]
 
 

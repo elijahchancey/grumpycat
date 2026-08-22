@@ -23,7 +23,7 @@ pieces land.
 3. Fix task: checkout at the deployed SHA (or default branch), optional `prepare`, render the
    brief, run the engine with test runners denied, commit, push `grumpycat/<fingerprint>`,
    open a draft PR, link it back on the source issue, post the Slack thread, callback.
-4. Wait for GitHub events. `status` failure → fetch the Buildkite job log via REST →
+4. Wait for GitHub events. `status` / `check_run` failure → the `ci` plugin fetches the failing job log →
    shepherd task. Review/issue comments from allow-listed actors → shepherd task. Green and no
    open threads → ready for review. Attempts exhausted → `needs-human`.
 5. Digest Lambda on a schedule: opened / merged / escalated / cost, per repo.

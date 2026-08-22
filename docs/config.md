@@ -12,12 +12,15 @@ engines: {}                        # optional per-engine config; engines are als
 outputs:
   github: {}
   slack: { channel: "#grumpycat", oncall_channel: "#oncall" }
+ci:                                # how to read the target repos' CI (one provider per deployment)
+  provider: buildkite              # buildkite | github_actions | <any installed ci plugin>
+  options: { org: acme }
 repos:
   acme/api:                        # owner/name
     engine: claude                 # claude | codex | <any installed engine>
     model: claude-sonnet-5
     default_branch: master
-    buildkite_pipeline: acme/api   # org/pipeline slug, for log fetching
+    ci_pipeline: acme/api          # pipeline id in the CI provider, for log fetching
     prepare: "rbenv local 3.4.2"   # optional, runs before the engine
     services: [api, api-worker]    # alert service names that map here (default: repo name)
     labels: [grumpycat]

@@ -33,19 +33,20 @@ components that are free for personal and commercial use.
 ```
 
 Grumpycat does **not** run your test suite. It commits, pushes, and follows your CI
-(Buildkite today) for the verdict. It also does not query your observability tools from
+(Buildkite or GitHub Actions, through a `ci` plugin) for the verdict. It also does not query your observability tools from
 inside the fix: the agent uses the skills and MCP servers already in your repo, with the
 CLIs your runtime image provides.
 
 ## Plugins
 
-Three axes, all discovered through Python entry points:
+Four axes, all discovered through Python entry points:
 
 | Axis | Built in | Planned |
 |---|---|---|
 | Inputs | `sentry`, `datadog` (Error Tracking issues, metric/APM monitors, log monitors) | `ecs_task` (EventBridge), generic webhook, Keep |
 | Engines | `claude`, `codex` | `openhands` |
 | Outputs | `github`, `slack` | `gitlab`, Datadog On-Call |
+| CI (reads the target repos' build logs) | `buildkite` | `github_actions` |
 
 Writing one is a class with a `spec: PluginSpec` and three methods. See
 [`docs/plugins.md`](docs/plugins.md).
