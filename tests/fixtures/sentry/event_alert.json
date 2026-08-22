@@ -1,0 +1,21 @@
+{
+  "action": "triggered",
+  "installation": {"uuid": "00000000-0000-0000-0000-000000000000"},
+  "data": {
+    "event": {
+      "event_id": "b1e3c0ffee00000000000000000000aa",
+      "issue_id": "4512345678",
+      "project_slug": "api",
+      "environment": "production",
+      "level": "error",
+      "title": "NoMethodError: undefined method `email' for nil",
+      "culprit": "app/services/notifier.rb in deliver",
+      "datetime": "2026-08-21T03:21:55.000Z",
+      "web_url": "https://acme.sentry.io/issues/4512345678/events/b1e3c0ffee00000000000000000000aa/",
+      "issue_url": "https://acme.sentry.io/issues/4512345678/",
+      "tags": [["environment", "production"], ["release", "1333a11ab9c0ffee"], ["transaction", "NotificationsController#create"], ["user", "id:12345"]]
+    },
+    "triggered_rule": "New prod errors → grumpycat"
+  },
+  "actor": {"type": "application", "id": "sentry", "name": "Sentry"}
+}

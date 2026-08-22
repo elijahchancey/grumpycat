@@ -80,7 +80,13 @@ class Plugin(ABC):
 
 
 class InputPlugin(Plugin):
-    """Turns a source payload into an `ErrorEvent`, then gathers `Evidence` for it."""
+    """Turns a source payload into an `ErrorEvent`, then gathers `Evidence` for it.
+
+    Inputs that call their source's API should build clients with `self.transport` so tests
+    can inject an `httpx.MockTransport` without touching auth or base URLs.
+    """
+
+    transport: Any = None  # httpx.BaseTransport | None; typed loosely to keep httpx optional
 
     def verify(self, headers: Mapping[str, str], body: bytes) -> bool:
         """HTTP inputs must override. EventBridge inputs are trusted by the rule itself."""

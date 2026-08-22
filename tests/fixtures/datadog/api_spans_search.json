@@ -1,0 +1,6 @@
+{"data": [
+  {"id": "s1", "type": "spans", "attributes": {"attributes": {"error": {"type": "ActiveRecord::RecordNotFound", "message": "Couldn't find Reaction with 'id'=981234 [WHERE widget_id = 77]", "stack": "ActiveRecord::RecordNotFound: Couldn't find Reaction with 'id'=981234\n  app/controllers/reactions_controller.rb:31:in `destroy'\n  app/controllers/application_controller.rb:12:in `authenticate!'"}}, "resource_name": "delete_/v1/widgets/:widget_id/reactions/:reaction_id", "service": "api"}},
+  {"id": "s2", "type": "spans", "attributes": {"attributes": {"error": {"type": "ActiveRecord::RecordNotFound", "message": "Couldn't find Reaction with 'id'=981301 [WHERE widget_id = 80]", "stack": "ActiveRecord::RecordNotFound: ...\n  app/controllers/reactions_controller.rb:31:in `destroy'"}}}},
+  {"id": "s3", "type": "spans", "attributes": {"attributes": {"error": {"type": "ActiveRecord::RecordNotFound", "message": "Couldn't find Reaction with 'id'=981377 [WHERE widget_id = 12]"}}}},
+  {"id": "s4", "type": "spans", "attributes": {"attributes": {"error": {"type": "Timeout::Error", "message": "execution expired"}}}}
+]}

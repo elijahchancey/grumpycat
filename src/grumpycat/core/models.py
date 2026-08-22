@@ -70,6 +70,14 @@ class Evidence(_Model):
     """
 
     exception: Exception_ | None = None
+    signature: str | None = Field(
+        default=None,
+        description=(
+            "Stable error signature discovered during enrichment (e.g. dominant exception "
+            "type+message). Triage folds it into the final fingerprint for sources whose "
+            "payload alone can't identify the defect (Datadog monitors, ECS exits)."
+        ),
+    )
     message: str | None = Field(default=None, description="Source's own message body, verbatim")
     first_seen: datetime | None = None
     last_seen: datetime | None = None

@@ -1,0 +1,4 @@
+{"data": [
+  {"id": "l1", "type": "log", "attributes": {"message": "ImageService IndexFaces failed after 3 attempts: ProvisionedThroughputExceededException user=jane.doe@example.test", "attributes": {"error": {"kind": "ProvisionedThroughputExceededException", "message": "Provisioned rate exceeded", "stack": "ProvisionedThroughputExceededException: Provisioned rate exceeded\n  lib/image_service/client.rb:88:in `index_faces'\n  app/jobs/index_face_job.rb:14:in `perform'"}}}},
+  {"id": "l2", "type": "log", "attributes": {"message": "ImageService IndexFaces failed after 3 attempts", "attributes": {"error": {"kind": "ProvisionedThroughputExceededException", "message": "Provisioned rate exceeded"}}}}
+]}

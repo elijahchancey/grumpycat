@@ -1,0 +1,16 @@
+{
+  "alert_id": "114522102",
+  "event_id": "8774228559996023076",
+  "transition": "Triggered",
+  "alert_type": "error",
+  "title": "[Triggered on {cluster:prod-api}] imagesvc | provisioned-throughput exhausted, the SDK gave up (prod)",
+  "scope": "cluster:prod-api",
+  "query": "logs(\"cluster:prod-* (@error:*ProvisionedThroughputExceededException* OR \\\"ProvisionedThroughputExceededException\\\") (@error:*ImageService* OR \\\"ImageService\\\")\").index(\"*\").rollup(\"count\").by(\"cluster\").last(\"5m\") > 0",
+  "tags": "cluster:prod-api,env:prod",
+  "priority": "normal",
+  "date": "1787247582000",
+  "last_updated": "1787247582000",
+  "link": "https://app.datadoghq.com/monitors/114522102?group=cluster%3Aprod-api&event_id=8774228559996023076",
+  "message": "TRUST & SAFETY: a face was not added to the collection, and nothing will retry it. On prod-api an ImageService call exhausted its retry budget against a provisioned-throughput limit — the SDK gave up after 3 attempts and the call did not happen.",
+  "org": {"id": "123456", "name": "acme"}
+}

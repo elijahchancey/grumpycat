@@ -1,0 +1,16 @@
+{
+  "alert_id": "112043591",
+  "event_id": "8775195426725525598",
+  "transition": "Triggered",
+  "alert_type": "error",
+  "title": "[Triggered on {resource_name:delete_/v1/widgets/:widget_id/reactions/:reaction_id}] api endpoint 5xx error rate over 10%",
+  "scope": "resource_name:delete_/v1/widgets/:widget_id/reactions/:reaction_id",
+  "query": "sum(last_10m):( sum:trace.http.request.errors{env:prod-api,service:api,span.kind:server,!resource_name:get,!resource_name:post} by {resource_name}.as_count() / sum:trace.http.request.hits{env:prod-api,service:api,span.kind:server} by {resource_name}.as_count() ) > 0.1",
+  "tags": "env:prod-api,service:api,team:platform",
+  "priority": "normal",
+  "date": "1787305211000",
+  "last_updated": "1787305211000",
+  "link": "https://app.datadoghq.com/monitors/112043591?group=resource_name%3Adelete_%2Fv1%2Fwidgets&event_id=8775195426725525598",
+  "message": "5xx error rate on one or more api endpoints is above 10%.\n\nResource: delete_/v1/widgets/:widget_id/reactions/:reaction_id\nEnv: prod-api\n\nEndpoints with fewer than 20 requests in the window are ignored.",
+  "org": {"id": "123456", "name": "acme"}
+}

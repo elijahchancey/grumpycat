@@ -1,0 +1,38 @@
+{
+  "action": "assigned",
+  "installation": {
+    "uuid": "00000000-0000-0000-0000-000000000000"
+  },
+  "data": {
+    "issue": {
+      "id": "4512345678",
+      "shortId": "API-1K7",
+      "title": "NoMethodError: undefined method `email' for nil",
+      "culprit": "app/services/notifier.rb in deliver",
+      "level": "error",
+      "status": "unresolved",
+      "substatus": "new",
+      "project": {
+        "id": "1",
+        "slug": "api",
+        "name": "api"
+      },
+      "firstSeen": "2026-08-21T03:14:07.000Z",
+      "lastSeen": "2026-08-21T03:21:55.000Z",
+      "count": "412",
+      "userCount": 57,
+      "permalink": "https://acme.sentry.io/issues/4512345678/",
+      "metadata": {
+        "type": "NoMethodError",
+        "value": "undefined method `email' for nil",
+        "filename": "app/services/notifier.rb",
+        "function": "deliver"
+      }
+    }
+  },
+  "actor": {
+    "type": "application",
+    "id": "sentry",
+    "name": "Sentry"
+  }
+}
