@@ -113,6 +113,21 @@ def test_claude_preflight_and_auth_modes(fake_bin: Path) -> None:
     assert ClaudeEngine(ClaudeConfig(), SECRETS)._env()["SENTRY_AUTH_TOKEN"] == "s"  # passthrough
 
 
+def test_claude_subscription_auth(fake_bin: Path) -> None:
+    script(fake_bin / "claude", "exit 0")
+    sub = ClaudeEngine(ClaudeConfig(auth="subscription"), {})
+    assert any("CLAUDE_CODE_OAUTH_TOKEN" in p for p in sub.preflight(Path(".")))
+    both = {"CLAUDE_CODE_OAUTH_TOKEN": "oat", "ANTHROPIC_API_KEY": "sk", "SENTRY_AUTH_TOKEN": "s"}
+    sub = ClaudeEngine(ClaudeConfig(auth="subscription"), both)
+    assert sub.preflight(Path(".")) == []
+    env = sub._env()
+    assert env["CLAUDE_CODE_OAUTH_TOKEN"] == "oat" and "ANTHROPIC_API_KEY" not in env
+    assert env["SENTRY_AUTH_TOKEN"] == "s"
+    # and the reverse: api_key mode never forwards the OAuth token
+    env = ClaudeEngine(ClaudeConfig(auth="api_key"), both)._env()
+    assert env["ANTHROPIC_API_KEY"] == "sk" and "CLAUDE_CODE_OAUTH_TOKEN" not in env
+
+
 def test_claude_run_parses_json_detects_changes_and_excludes_our_files(
     fake_bin: Path, repo: Path
 ) -> None:
@@ -200,6 +215,46 @@ def test_codex_argv_and_usage_parsing() -> None:
         ]
     )
     assert _usage_from_jsonl(jsonl) == {"input_tokens": 150, "output_tokens": 25, "turns": 2}
+
+
+def test_codex_auth_modes(fake_bin: Path, repo: Path) -> None:
+    script(fake_bin / "codex", "exit 0")
+    assert any("OPENAI_API_KEY" in p for p in CodexEngine(CodexConfig(), {}).preflight(Path(".")))
+    chat = CodexEngine(CodexConfig(auth="chatgpt"), {"CODEX_AUTH_JSON": "not json"})
+    problems = chat.preflight(Path("."))
+    assert any("not valid JSON" in p for p in problems)
+    auth = json.dumps({"tokens": {"access_token": "a", "refresh_token": "r"}})
+    chat = CodexEngine(
+        CodexConfig(auth="chatgpt"),
+        {"CODEX_AUTH_JSON": auth, "OPENAI_API_KEY": "sk", "SENTRY_AUTH_TOKEN": "s"},
+    )
+    assert chat.preflight(Path(".")) == []
+    home = chat._prepare_home(repo)
+    assert (home / "auth.json").read_text() == auth
+    assert oct((home / "auth.json").stat().st_mode & 0o777) == "0o600"
+    env = chat._env(home)
+    assert env["CODEX_HOME"] == str(home)
+    assert "OPENAI_API_KEY" not in env and "CODEX_AUTH_JSON" not in env
+    assert env["SENTRY_AUTH_TOKEN"] == "s"
+    env = CodexEngine(CodexConfig(), SECRETS)._env(home)
+    assert env["OPENAI_API_KEY"] == "sk-test"
+
+
+def test_codex_chatgpt_run_cleans_up_home(fake_bin: Path, repo: Path) -> None:
+    script(
+        fake_bin / "codex",
+        """
+        test -f "$CODEX_HOME/auth.json" || { echo "no auth" >&2; exit 7; }
+        test -z "$OPENAI_API_KEY" || { echo "key leaked" >&2; exit 8; }
+        echo ok >> app.rb
+        """,
+    )
+    eng = CodexEngine(
+        CodexConfig(auth="chatgpt"), {"CODEX_AUTH_JSON": "{}", "OPENAI_API_KEY": "sk"}
+    )
+    res = eng.run(make_task(engine="codex"), repo, "brief")
+    assert res.changed is True and res.raw["returncode"] == 0
+    assert not (repo / ".grumpycat" / "codex-home").exists()
 
 
 def test_codex_run(fake_bin: Path, repo: Path) -> None:

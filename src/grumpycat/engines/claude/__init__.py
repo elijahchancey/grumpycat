@@ -7,8 +7,13 @@ Guardrails are enforced by Claude Code itself, not by prompt alone:
   --settings {"permissions": {"deny": [...]}}   test runners, commit, push, network tools
   --max-turns N                   hard cap on iterations
 
-Auth: ANTHROPIC_API_KEY in the secrets map, or `auth: bedrock` (task-role credentials via
-CLAUDE_CODE_USE_BEDROCK=1). Cost comes back in the JSON result (`total_cost_usd`).
+Auth (`auth:` in the engine config):
+  api_key       ANTHROPIC_API_KEY in the secrets map — billed per token to the org's key
+  bedrock       task-role credentials via CLAUDE_CODE_USE_BEDROCK=1 — billed to the AWS account
+  subscription  CLAUDE_CODE_OAUTH_TOKEN from `claude setup-token` — uses a Pro/Max/Team plan.
+                Tied to one person's account and rate limits; fine for a solo deployment,
+                not for an org bot whose spend should land on the org.
+Cost comes back in the JSON result (`total_cost_usd`, an estimate under a subscription).
 """
 
 from __future__ import annotations
@@ -78,7 +83,7 @@ class ClaudeConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     model: str | None = Field(default=None, description="Default model; repos may override")
-    auth: Literal["api_key", "bedrock"] = "api_key"
+    auth: Literal["api_key", "bedrock", "subscription"] = "api_key"
     max_turns: int = Field(default=60, ge=1, le=500)
     timeout_minutes: int = Field(default=40, ge=1, le=180)
     allowed_tools: list[str] = Field(default_factory=lambda: list(DEFAULT_ALLOWED))
@@ -108,8 +113,10 @@ class ClaudeEngine(EnginePlugin):
         problems = []
         if _cli.which(self.config.binary) is None:
             problems.append(f"`{self.config.binary}` not on PATH in the worker image")
-        if self.config.auth == "api_key" and not self.secrets.get("ANTHROPIC_API_KEY"):
-            problems.append("ANTHROPIC_API_KEY missing from the secrets map (auth: api_key)")
+        needed = {"api_key": "ANTHROPIC_API_KEY", "subscription": "CLAUDE_CODE_OAUTH_TOKEN"}
+        key = needed.get(self.config.auth)
+        if key and not self.secrets.get(key):
+            problems.append(f"{key} missing from the secrets map (auth: {self.config.auth})")
         return problems
 
     def _env(self) -> dict[str, str]:
@@ -122,12 +129,19 @@ class ClaudeEngine(EnginePlugin):
             for k in ("AWS_REGION", "AWS_DEFAULT_REGION"):
                 if k in self.secrets:
                     env[k] = self.secrets[k]
+        elif self.config.auth == "subscription":
+            env["CLAUDE_CODE_OAUTH_TOKEN"] = self.secrets["CLAUDE_CODE_OAUTH_TOKEN"]
         else:
             env["ANTHROPIC_API_KEY"] = self.secrets["ANTHROPIC_API_KEY"]
+        # Never let the other credential leak in through the passthrough below: Claude Code
+        # prefers an API key over an OAuth token when both are present.
+        other = {"subscription": "ANTHROPIC_API_KEY", "api_key": "CLAUDE_CODE_OAUTH_TOKEN"}
+        skip = {other.get(self.config.auth)}
         # Pass through everything else the deployment mapped (tokens for the repo's own skills
         # and MCP servers); the engine never sees AWS task-role creds unless mapped.
         for k, v in self.secrets.items():
-            env.setdefault(k, v)
+            if k not in skip:
+                env.setdefault(k, v)
         return env
 
     def argv(self, task: WorkerTask) -> list[str]:
