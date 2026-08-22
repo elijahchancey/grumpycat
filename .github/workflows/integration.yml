@@ -1,0 +1,60 @@
+name: integration
+
+# Executes the real Step Functions definition against LocalStack with stub worker/lifecycle
+# Lambdas. Runs only when the orchestration or the handlers change; slower than `ci`.
+
+on:
+  pull_request:
+    paths:
+      - "statemachine/**"
+      - "src/grumpycat/handlers/**"
+      - "tests/integration/**"
+      - ".github/workflows/integration.yml"
+  push:
+    branches: [main]
+    paths:
+      - "statemachine/**"
+      - "src/grumpycat/handlers/**"
+      - "tests/integration/**"
+
+permissions:
+  contents: read
+
+env:
+  # Newest 4.x line; the 2026.x images exit without a license token.
+  LOCALSTACK_VERSION: "4.14.0"
+
+jobs:
+  statemachine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      # Not a `services:` container: Actions puts those on a per-job network, while the Lambda
+      # containers LocalStack spawns through the Docker socket land on the default bridge and
+      # could not reach it. Plain `docker run` keeps LocalStack on the default bridge too.
+      - name: start localstack
+        run: |
+          docker run -d --name localstack -p 4566:4566 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs \
+            -e LAMBDA_DOCKER_NETWORK=bridge \
+            localstack/localstack:${LOCALSTACK_VERSION}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - run: uv sync --frozen --group dev
+      - name: wait for step functions
+        run: |
+          for i in $(seq 1 40); do
+            curl -sf http://localhost:4566/_localstack/health | grep -q '"stepfunctions"' && exit 0
+            sleep 3
+          done
+          echo "localstack not ready" >&2; exit 1
+      - run: uv run pytest tests/integration -m integration -p no:cacheprovider -v
+        env:
+          LOCALSTACK_ENDPOINT: http://localhost:4566
+      - name: localstack logs
+        if: failure()
+        run: docker logs localstack 2>&1 | tail -200

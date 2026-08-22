@@ -97,7 +97,7 @@ disable_error_code = ["type-abstract"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -m 'not integration'"
 markers = ["integration: needs real AWS/GitHub credentials"]
 
 [tool.coverage.run]
