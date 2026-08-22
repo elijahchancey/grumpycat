@@ -34,6 +34,8 @@ Issues = "https://github.com/elijahchancey/grumpycat/issues"
 # Plugin registry. Built-ins register here as they land; third-party packages use the
 # same three groups. See docs/plugins.md.
 [project.entry-points."grumpycat.inputs"]
+sentry = "grumpycat.inputs.sentry:SentryInput"
+datadog = "grumpycat.inputs.datadog:DatadogInput"
 
 [project.entry-points."grumpycat.engines"]
 

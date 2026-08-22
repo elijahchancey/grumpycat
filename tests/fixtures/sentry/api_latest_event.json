@@ -1,0 +1,17 @@
+{
+  "eventID": "b1e3c0ffee00000000000000000000aa",
+  "message": "",
+  "culprit": "app/services/notifier.rb in deliver",
+  "release": {"version": "1333a11ab9c0ffee"},
+  "tags": [{"key": "environment", "value": "production"}, {"key": "transaction", "value": "NotificationsController#create"}, {"key": "user", "value": "id:12345"}],
+  "entries": [
+    {"type": "request", "data": {"method": "POST", "url": "https://app.example.test/notifications", "query": [["to", "someone@example.test"]], "headers": [["Authorization", "Bearer sk_live_abc123def456ghi789"], ["User-Agent", "curl/8"]]}},
+    {"type": "exception", "data": {"values": [
+      {"type": "NoMethodError", "value": "undefined method `email' for nil (user jane.doe@example.test)",
+       "stacktrace": {"frames": [
+         {"filename": "app/controllers/notifications_controller.rb", "lineNo": 18, "function": "create", "inApp": true},
+         {"filename": "app/services/notifier.rb", "lineNo": 42, "function": "deliver", "inApp": true}
+       ]}}
+    ]}}
+  ]
+}

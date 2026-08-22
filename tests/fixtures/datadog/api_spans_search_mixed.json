@@ -1,0 +1,5 @@
+{"data": [
+  {"id": "a", "attributes": {"attributes": {"error": {"type": "A", "message": "one"}}}},
+  {"id": "b", "attributes": {"attributes": {"error": {"type": "B", "message": "two"}}}},
+  {"id": "c", "attributes": {"attributes": {"error": {"type": "C", "message": "three"}}}}
+]}

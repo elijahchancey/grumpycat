@@ -1,0 +1,1 @@
+{"id": "4512345678", "shortId": "API-1K7", "title": "NoMethodError: undefined method `email' for nil", "culprit": "app/services/notifier.rb in deliver", "permalink": "https://acme.sentry.io/issues/4512345678/", "firstSeen": "2026-08-21T03:14:07Z", "lastSeen": "2026-08-21T03:21:55Z", "count": "412", "userCount": 57, "level": "error"}
