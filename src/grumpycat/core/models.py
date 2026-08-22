@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -182,6 +182,28 @@ class CIFailure(_Model):
     truncated: bool = False
 
 
+class FixOutcome(_Model):
+    """Worker -> Step Functions callback after a fix or shepherd run."""
+
+    status: Literal["pr_open", "pushed", "declined", "failed"]
+    pr_number: int | None = None
+    pr_url: HttpUrl | None = None
+    branch: str | None = None
+    summary: str = ""
+    cost_usd: float | None = None
+
+
+class AwaitedEvent(_Model):
+    """GitHub -> Step Functions: what happened to the PR while the execution was parked."""
+
+    kind: Literal["ci_failure", "ci_success", "review", "comment", "merged", "closed"]
+    actor: str | None = None
+    ci_failure: CIFailure | None = None
+    findings: list[str] = Field(default_factory=list, description="Review/comment bodies")
+    sha: str | None = None
+    received_at: datetime
+
+
 class IssueStatus(StrEnum):
     TRIAGED = "triaged"
     AWAITING_APPROVAL = "awaiting_approval"
@@ -210,5 +232,6 @@ class IssueState(_Model):
     attempts: int = 0
     cost_usd: float = 0.0
     slack_thread_ts: str | None = None
+    rationale: str | None = Field(default=None, description="Why RCA-only / needs-human")
     created_at: datetime
     updated_at: datetime
