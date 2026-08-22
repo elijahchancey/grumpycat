@@ -52,6 +52,7 @@ slack = "grumpycat.outputs.slack:SlackOutput"
 
 [project.entry-points."grumpycat.ci"]
 buildkite = "grumpycat.ci.buildkite:BuildkiteCI"
+github_actions = "grumpycat.ci.github_actions:GitHubActionsCI"
 
 [dependency-groups]
 dev = [

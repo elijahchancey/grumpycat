@@ -46,7 +46,7 @@ Four axes, all discovered through Python entry points:
 | Inputs | `sentry`, `datadog` (Error Tracking issues, metric/APM monitors, log monitors) | `ecs_task` (EventBridge), generic webhook, Keep |
 | Engines | `claude`, `codex` | `openhands` |
 | Outputs | `github`, `slack` | `gitlab`, Datadog On-Call |
-| CI (reads the target repos' build logs) | `buildkite` | `github_actions` |
+| CI (reads the target repos' build logs) | `buildkite`, `github_actions` | — |
 
 Writing one is a class with a `spec: PluginSpec` and three methods. See
 [`docs/plugins.md`](docs/plugins.md).

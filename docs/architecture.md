@@ -56,7 +56,8 @@ a Slack approval before any fix run.
 
 Handlers: `router` (`/in/{input}` + EventBridge), `triage`, `github_hook` (`/hooks/github`),
 `slack_interactions` (`/slack/interactions`, approve/dismiss buttons), `lifecycle`
-(`park` / `after_run` / `finalize`, called by the state machine). The worker gets
+(`park` / `after_run` / `finalize`, called by the state machine), `digest` (EventBridge
+schedule, `{"hours": 24}`; posts a per-repo summary to the Slack channel). The worker gets
 `GRUMPYCAT_TASK` (a `WorkerTask` JSON, including the Step Functions task token) and
 `GRUMPYCAT_BRIEF_MD` as container overrides.
 
