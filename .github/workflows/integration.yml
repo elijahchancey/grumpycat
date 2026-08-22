@@ -30,16 +30,15 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      # Not a `services:` container: LocalStack spawns Lambda containers through the Docker
-      # socket, and those must share a network with LocalStack itself. Host networking is
-      # the simplest way to make `localhost:4566` true for the runner, LocalStack and the
-      # Lambda containers alike.
+      # Not a `services:` container: Actions puts those on a per-job network, while the Lambda
+      # containers LocalStack spawns through the Docker socket land on the default bridge and
+      # could not reach it. Plain `docker run` keeps LocalStack on the default bridge too.
       - name: start localstack
         run: |
-          docker run -d --name localstack --network host \
+          docker run -d --name localstack -p 4566:4566 \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -e SERVICES=stepfunctions,lambda,dynamodb,iam,sts,logs \
-            -e LAMBDA_DOCKER_NETWORK=host \
+            -e LAMBDA_DOCKER_NETWORK=bridge \
             localstack/localstack:${LOCALSTACK_VERSION}
       - uses: astral-sh/setup-uv@v6
         with:
