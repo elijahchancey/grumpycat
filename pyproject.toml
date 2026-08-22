@@ -1,7 +1,7 @@
 [project]
 name = "grumpycat"
 version = "0.1.0"
-description = "Turns production errors into draft pull requests that follow each repo's own agent rules, then shepherds them to green."
+description = "Turns production errors into draft pull requests that follow each repo's own agent rules, then grooms them to green."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.13"

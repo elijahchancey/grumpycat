@@ -6,7 +6,7 @@ Input (container overrides set by the state machine):
   GRUMPYCAT_CONFIG*    as for the Lambdas; secrets are injected natively via the task def
 
 Sequence: mint GitHub token → clone (shallow) → checkout (deployed SHA / default branch, or
-the existing PR branch for a shepherd run) → optional `prepare` → engine.preflight → engine.run
+the existing PR branch for a groom run) → optional `prepare` → engine.preflight → engine.run
 → commit exactly what changed (never the brief or the report) → push → SendTaskSuccess with a
 `FixOutcome`. Any failure → SendTaskFailure, which the state machine routes to needs_human.
 
@@ -85,7 +85,7 @@ class Workspace:
         git(["config", "user.name", GIT_USER[0]], self.dir)
         git(["config", "user.email", GIT_USER[1]], self.dir)
         _cli.ensure_scratch(self.dir)
-        if t.kind is TaskKind.SHEPHERD:
+        if t.kind is TaskKind.GROOM:
             git(["fetch", "--quiet", "origin", t.branch], self.dir)
             git(["checkout", "--quiet", "-B", t.branch, f"origin/{t.branch}"], self.dir)
             return git(["rev-parse", "HEAD"], self.dir).strip()
@@ -124,7 +124,7 @@ class Workspace:
 
 def commit_message(task: WorkerTask, result: EngineResult) -> str:
     e = task.brief.event
-    if task.kind is TaskKind.SHEPHERD:
+    if task.kind is TaskKind.GROOM:
         head = f"fix: address CI/review feedback (attempt {task.attempt})"
     else:
         head = f"fix: {e.title[:60]}"

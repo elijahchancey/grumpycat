@@ -72,7 +72,7 @@ def test_fingerprint_helpers() -> None:
     assert branch_name(fp).startswith("grumpycat/datadog-") and len(short_id(fp)) == 10
 
 
-def test_render_brief_fix_and_shepherd() -> None:
+def test_render_brief_fix_and_groom() -> None:
     ev = make_event(fingerprint="sentry:acme:1", url="https://acme.sentry.io/issues/1/")
     evidence = Evidence(
         exception=exc(),

@@ -10,7 +10,7 @@ pieces land.
 |---|---|---|
 | **Lambda** (edges) | webhook router, triage, GitHub event handler, Slack interactions, daily digest | short, bursty, stateless |
 | **Step Functions** | one execution per error fingerprint | execution history *is* the debugging UI; timeouts and retries built in |
-| **ECS Fargate** | one task per fix / shepherd run: clone → agent → commit → push → callback | agent sessions run 5–40 min, need a writable disk and the client's toolchain; Lambda's 15-min cap and image limits rule it out |
+| **ECS Fargate** | one task per fix / groom run: clone → agent → commit → push → callback | agent sessions run 5–40 min, need a writable disk and the client's toolchain; Lambda's 15-min cap and image limits rule it out |
 | **DynamoDB** | `IssueState` by fingerprint; PR number → execution lookup; attempt and cost counters | one open issue per fingerprint, enforced with a conditional put |
 
 ## Flow
@@ -24,7 +24,7 @@ pieces land.
    brief, run the engine with test runners denied, commit, push `grumpycat/<fingerprint>`,
    open a draft PR, link it back on the source issue, post the Slack thread, callback.
 4. Wait for GitHub events. `status` / `check_run` failure → the `ci` plugin fetches the failing job log →
-   shepherd task. Review/issue comments from allow-listed actors → shepherd task. Green and no
+   groom task. Review/issue comments from allow-listed actors → groom task. Green and no
    open threads → ready for review. Attempts exhausted → `needs-human`.
 5. Digest Lambda on a schedule: opened / merged / escalated / cost, per repo.
 
@@ -92,7 +92,7 @@ Outputs react to state transitions (`OutputPlugin.on_transition(state, previous,
 | `awaiting_approval` | — | message with **Open a fix PR / Dismiss** buttons (gated mode) |
 | page (any status, once) | — | post to `oncall_channel` |
 | `pr_open` (no PR yet) | open draft PR from the pushed branch, label | thread reply with the link |
-| `shepherding` (new push) | comment what was pushed; reply to + resolve the review threads it addressed; attach the engine report | thread reply |
+| `grooming` (new push) | comment what was pushed; reply to + resolve the review threads it addressed; attach the engine report | thread reply |
 | `ready` | mark ready for review, request reviewers, comment | thread reply |
 | `needs_human` | `needs-human` label + reason | thread reply |
 | `rca_only` | — | summary with the reason |

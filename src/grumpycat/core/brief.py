@@ -24,7 +24,7 @@ before anything else. Then:
    should look at.
 """
 
-INSTRUCTIONS_SHEPHERD = """\
+INSTRUCTIONS_GROOM = """\
 ## Instructions
 
 This branch already contains a fix for the error above and is under review. Address the
@@ -100,7 +100,7 @@ def render_brief(
             lines += [head, _code(ci_failure.excerpt, 12000)]
         for i, f in enumerate(findings or [], 1):
             lines += [f"### Review comment {i}", _code(f, 3000)]
-        lines += ["", INSTRUCTIONS_SHEPHERD]
+        lines += ["", INSTRUCTIONS_GROOM]
     else:
         lines += ["", INSTRUCTIONS_FIX]
     return "\n".join(lines) + "\n"

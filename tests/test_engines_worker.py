@@ -345,7 +345,7 @@ def test_worker_declines_without_pushing(
     assert "grumpycat/fake-abc" not in sh("git branch", origin)
 
 
-def test_worker_shepherd_run_continues_existing_branch(
+def test_worker_groom_run_continues_existing_branch(
     fake_bin: Path, origin: Path, tmp_path: Path, fake_entry_points: Any
 ) -> None:
     # first push
@@ -358,12 +358,12 @@ def test_worker_shepherd_run_continues_existing_branch(
         clone_url=str(origin),
         root=tmp_path / "w1",
     )
-    # shepherd iteration sees v1 and adds to it
+    # groom iteration sees v1 and adds to it
     script(
         fake_bin / "claude",
         'test -f fix.txt || exit 9; echo v2 >> fix.txt; echo \'{"result":"v2"}\'',
     )
-    task = make_task(kind=TaskKind.SHEPHERD).model_copy(update={"attempt": 2, "pr_number": 7})
+    task = make_task(kind=TaskKind.GROOM).model_copy(update={"attempt": 2, "pr_number": 7})
     out = worker.run(
         task,
         "b",

@@ -6,7 +6,8 @@ Grumpycat listens for errors from your observability stack (Sentry, Datadog, AWS
 decides whether each one looks like a code defect, and — if it does — runs a coding agent
 (Claude Code or Codex) in a checkout of the right repository. The agent follows that repo's
 own `AGENTS.md` / `CLAUDE.md` / rules / skills, writes a minimal fix and a regression test,
-and opens a **draft** PR. Grumpycat then shepherds the PR: it watches CI, reads review-bot
+and opens a **draft** PR. Grumpycat then **grooms** the PR — like a cat, it keeps working at
+it until it is clean: it watches CI, reads review-bot
 and human comments, pushes follow-up commits until the build is green and no review thread
 is open, and hands off to a human when it is stuck. It never merges.
 
@@ -26,7 +27,7 @@ components that are free for personal and commercial use.
                                                                   │
                                    ECS Fargate task: clone ▸ agent ▸ commit ▸ push ▸ draft PR
                                                                   │
-                           GitHub events (CI status, reviews, comments) ──▶ shepherd runs
+                           GitHub events (CI status, reviews, comments) ──▶ groom runs
                                                                   │
                                           green + 0 open threads ──▶ ready for review
                                           attempt budget spent   ──▶ needs-human + Slack

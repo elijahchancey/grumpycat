@@ -149,7 +149,7 @@ def transition_text(state: IssueState, prev: IssueStatus | None) -> str | None:
         return ":hammer_and_wrench: starting a fix run"
     if s is IssueStatus.PR_OPEN and state.pr_url and (not same or prev is None):
         return f":git: draft PR opened: {state.pr_url}"
-    if s is IssueStatus.SHEPHERDING:
+    if s is IssueStatus.GROOMING:
         o = state.last_outcome
         sha = f" `{o.pushed_sha[:10]}`" if o and o.pushed_sha else ""
         return f":arrows_counterclockwise: pushed follow-up{sha} (attempt {state.attempts})"
@@ -165,7 +165,7 @@ def transition_text(state: IssueState, prev: IssueStatus | None) -> str | None:
         return f":x: closed — {state.rationale or 'PR closed without merging'}"
     if same and s in {
         IssueStatus.PR_OPEN,
-        IssueStatus.SHEPHERDING,
+        IssueStatus.GROOMING,
         IssueStatus.READY,
         IssueStatus.AWAITING_APPROVAL,
     }:

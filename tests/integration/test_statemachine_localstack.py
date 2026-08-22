@@ -122,7 +122,7 @@ def stack() -> dict[str, Any]:
     }.items():
         text = text.replace("${" + k + "}", v)
     asl = json.loads(text)
-    for name in ("Fix", "Shepherd"):
+    for name in ("Fix", "Groom"):
         asl["States"][name]["Resource"] = "arn:aws:states:::lambda:invoke.waitForTaskToken"
         asl["States"][name]["Arguments"] = {
             "FunctionName": worker,
@@ -214,7 +214,7 @@ def _resume(st: dict[str, Any], token: str, kind: str, **extra: Any) -> None:
     st["sfn"].send_task_success(taskToken=token, output=json.dumps(ev))
 
 
-def test_fix_then_ci_failure_then_shepherd_then_ready_then_merged(stack: dict[str, Any]) -> None:
+def test_fix_then_ci_failure_then_groom_then_ready_then_merged(stack: dict[str, Any]) -> None:
     fp = f"it-happy-{time.time_ns()}"
     arn = stack["sfn"].start_execution(stateMachineArn=stack["sm"], input=_input(fp, "boom", 3))[
         "executionArn"
@@ -237,9 +237,9 @@ def test_fix_then_ci_failure_then_shepherd_then_ready_then_merged(stack: dict[st
     t2 = _wait_token(stack, fp, not_token=t1)
     recs = _records(stack, fp)
     assert [r["op"] for r in recs] == ["after_run", "park", "after_run", "park"]
-    shepherd = recs[2]["payload"]
-    assert shepherd["attempt"] == 1 and shepherd["outcome"]["summary"] == "push 1"
-    assert shepherd["outcome"]["addressed_comment_ids"] == [501]
+    groom = recs[2]["payload"]
+    assert groom["attempt"] == 1 and groom["outcome"]["summary"] == "push 1"
+    assert groom["outcome"]["addressed_comment_ids"] == [501]
 
     _resume(stack, t2, "ci_success")
     t3 = _wait_token(stack, fp, not_token=t2)  # FinalizeReady -> Park again
@@ -260,7 +260,7 @@ def test_attempt_budget_exhausted_ends_in_needs_human(stack: dict[str, Any]) -> 
     ]
     t1 = _wait_token(stack, fp)
     _resume(stack, t1, "ci_failure", ci_failure={"excerpt": "x"})
-    t2 = _wait_token(stack, fp, not_token=t1)  # one shepherd run allowed
+    t2 = _wait_token(stack, fp, not_token=t1)  # one groom run allowed
     _resume(stack, t2, "ci_failure", ci_failure={"excerpt": "y"})
     assert _wait_status(stack, arn, {"SUCCEEDED", "FAILED"}) == "SUCCEEDED"
     finals = [r["payload"] for r in _records(stack, fp) if r["op"] == "finalize"]

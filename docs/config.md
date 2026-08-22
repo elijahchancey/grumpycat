@@ -27,7 +27,7 @@ repos:
 policy:
   page_when: { env: prod, level_fatal: true, users_15m: 50 }
   confidence_min: 0.6              # below this: RCA to Slack, no PR
-  max_attempts: 3                  # shepherd iterations before needs-human
+  max_attempts: 3                  # groom iterations before needs-human
   prs_per_day: 10
   cooldown_hours: 72               # after a closed-unmerged PR
   gated: true                      # Slack approval before every fix run

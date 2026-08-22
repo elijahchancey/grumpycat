@@ -83,7 +83,7 @@ class Config(_Model):
     policy: Policy = Field(default_factory=Policy)
     reviewer_allowlist: list[str] = Field(
         default_factory=list,
-        description="GitHub logins (bots and humans) whose PR comments the shepherd acts on",
+        description="GitHub logins (bots and humans) whose PR comments the groomer acts on",
     )
 
     @field_validator("repos")

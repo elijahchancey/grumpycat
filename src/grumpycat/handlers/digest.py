@@ -18,7 +18,7 @@ ORDER = [
     IssueStatus.MERGED,
     IssueStatus.READY,
     IssueStatus.PR_OPEN,
-    IssueStatus.SHEPHERDING,
+    IssueStatus.GROOMING,
     IssueStatus.FIXING,
     IssueStatus.AWAITING_APPROVAL,
     IssueStatus.NEEDS_HUMAN,

@@ -145,9 +145,7 @@ def test_github_after_push_comments_replies_and_resolves_threads() -> None:
         report="declined one nit",
     )
     prev = make_state(status=IssueStatus.PR_OPEN, pr_number=42)
-    state = make_state(
-        status=IssueStatus.SHEPHERDING, pr_number=42, attempts=2, last_outcome=outcome
-    )
+    state = make_state(status=IssueStatus.GROOMING, pr_number=42, attempts=2, last_outcome=outcome)
     out.on_transition(state, prev, None)
     paths = rec.paths()
     assert paths[0] == "POST /repos/acme/api/issues/42/comments"
@@ -178,7 +176,7 @@ def test_github_ready_and_needs_human() -> None:
         pr_number=42,
         pr_url=HttpUrl("https://github.com/acme/api/pull/42"),
     )
-    out.on_transition(st, make_state(status=IssueStatus.SHEPHERDING, pr_number=42), None)
+    out.on_transition(st, make_state(status=IssueStatus.GROOMING, pr_number=42), None)
     paths = rec.paths()
     assert "POST /graphql" in paths and "POST /repos/acme/api/pulls/42/requested_reviewers" in paths
     rr = next(b for m, p, b in rec.calls if p.endswith("requested_reviewers"))
@@ -264,7 +262,7 @@ def test_slack_thread_replies_per_transition_and_rca_only() -> None:
             "draft PR opened",
         ),
         (
-            IssueStatus.SHEPHERDING,
+            IssueStatus.GROOMING,
             {"attempts": 2, "last_outcome": FixOutcome(status="pushed", pushed_sha="abcdef123456")},
             "pushed follow-up `abcdef1234` (attempt 2)",
         ),

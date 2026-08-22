@@ -54,7 +54,7 @@ def test_every_transition_targets_an_existing_state() -> None:
 
 def test_worker_tasks_carry_token_and_budget_flow() -> None:
     d = render()
-    for name in ("Fix", "Shepherd"):
+    for name in ("Fix", "Groom"):
         s = d["States"][name]
         assert s["Resource"] == "arn:aws:states:::ecs:runTask.waitForTaskToken"
         env = s["Arguments"]["Overrides"]["ContainerOverrides"][0]["Environment"]

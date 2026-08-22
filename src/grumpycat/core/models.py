@@ -139,11 +139,11 @@ class Brief(_Model):
 
 class TaskKind(StrEnum):
     FIX = "fix"
-    SHEPHERD = "shepherd"
+    GROOM = "groom"
 
 
-class ShepherdTrigger(_Model):
-    """Why a shepherd run was started. Exactly one of the optional fields is set."""
+class GroomTrigger(_Model):
+    """Why a groom run was started. Exactly one of the optional fields is set."""
 
     ci_failure_log: str | None = None
     review_findings: list[str] = Field(default_factory=list)
@@ -161,7 +161,7 @@ class WorkerTask(_Model):
     branch: str
     pr_number: int | None = None
     attempt: int = 1
-    trigger: ShepherdTrigger | None = None
+    trigger: GroomTrigger | None = None
     task_token: str | None = Field(default=None, description="Step Functions callback token")
 
 
@@ -177,7 +177,7 @@ class EngineResult(_Model):
 
 
 class CIFailure(_Model):
-    """What a CI plugin could recover about a failed build, for the shepherd prompt."""
+    """What a CI plugin could recover about a failed build, for the groom prompt."""
 
     build_url: HttpUrl | None = None
     job_name: str | None = None
@@ -186,7 +186,7 @@ class CIFailure(_Model):
 
 
 class FixOutcome(_Model):
-    """Worker -> Step Functions callback after a fix or shepherd run."""
+    """Worker -> Step Functions callback after a fix or groom run."""
 
     status: Literal["pr_open", "pushed", "declined", "failed"]
     pr_number: int | None = None
@@ -218,7 +218,7 @@ class IssueStatus(StrEnum):
     AWAITING_APPROVAL = "awaiting_approval"
     FIXING = "fixing"
     PR_OPEN = "pr_open"
-    SHEPHERDING = "shepherding"
+    GROOMING = "grooming"
     READY = "ready"
     NEEDS_HUMAN = "needs_human"
     RCA_ONLY = "rca_only"
