@@ -64,3 +64,19 @@ Handlers: `router` (`/in/{input}` + EventBridge), `triage`, `github_hook` (`/hoo
 Single table, `pk` hash key, two GSIs: `branch` (hash `branch` = `owner/name#branch`) and
 `opened_on` (hash `opened_on` = `owner/name#YYYY-MM-DD`, keys-only). Items: `ISSUE#<fingerprint>`
 (state document, `wait_token`, `pending_events`) and `PR#<owner/name>#<number>` → fingerprint.
+
+## Engines and the worker
+
+The worker clones the target repo (at the deployed SHA when the source reports one), runs an
+optional per-repo `prepare` command, writes the brief to `.grumpycat/BRIEF.md` (excluded from
+git), and runs the engine in that checkout:
+
+| Engine | Invocation | Rule files | Guardrails |
+|---|---|---|---|
+| `claude` | `claude -p … --permission-mode dontAsk --max-turns N --allowedTools … --settings {deny: […]}` | `CLAUDE.md`, `.claude/rules`, skills, hooks, `.mcp.json` | allow-list + deny-list (test runners, commit, push, network), turn cap, timeout |
+| `codex` | `codex exec --json --sandbox workspace-write …` | `AGENTS.md` | OS sandbox (no network by default), timeout, instructions |
+
+Engines never commit. The worker stages everything except `.grumpycat/` and
+`GRUMPYCAT_REPORT.md`, commits as `grumpycat[bot]`, pushes `grumpycat/<id>` and reports a
+`FixOutcome` to Step Functions. A run that changes nothing is `declined` (with the report) and
+ends the execution; the GitHub output opens the draft PR on the `PR_OPEN` transition.

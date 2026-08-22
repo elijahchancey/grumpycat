@@ -55,7 +55,11 @@ def after_run(
             "branch": outcome.branch or state.branch,
         }
     elif outcome.status == "pushed":
-        update["status"] = IssueStatus.SHEPHERDING
+        # First push: the GitHub output opens the draft PR on the PR_OPEN transition.
+        update["status"] = (
+            IssueStatus.SHEPHERDING if state.pr_number is not None else IssueStatus.PR_OPEN
+        )
+        update["branch"] = outcome.branch or state.branch
     elif outcome.status == "declined":
         update |= {"status": IssueStatus.RCA_ONLY, "rationale": outcome.summary}
     else:
