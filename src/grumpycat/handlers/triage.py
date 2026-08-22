@@ -165,6 +165,7 @@ def process(rt: Runtime, event: ErrorEvent) -> dict[str, Any]:
             rt, state, brief, f"daily PR cap ({policy.prs_per_day}) reached for {target.full_name}"
         )
 
+    state = state.model_copy(update={"brief": brief})
     if policy.gated:
         state = state.model_copy(update={"status": IssueStatus.AWAITING_APPROVAL})
         state = rt.store.put(_notify(rt, state, None, brief))

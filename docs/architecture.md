@@ -55,7 +55,8 @@ a Slack approval before any fix run.
 | `GRUMPYCAT_BOT_LOGIN` (default `grumpycat[bot]`) | module | github hook |
 
 Handlers: `router` (`/in/{input}` + EventBridge), `triage`, `github_hook` (`/hooks/github`),
-`lifecycle` (`park` / `after_run` / `finalize`, called by the state machine). The worker gets
+`slack_interactions` (`/slack/interactions`, approve/dismiss buttons), `lifecycle`
+(`park` / `after_run` / `finalize`, called by the state machine). The worker gets
 `GRUMPYCAT_TASK` (a `WorkerTask` JSON, including the Step Functions task token) and
 `GRUMPYCAT_BRIEF_MD` as container overrides.
 
@@ -80,3 +81,21 @@ Engines never commit. The worker stages everything except `.grumpycat/` and
 `GRUMPYCAT_REPORT.md`, commits as `grumpycat[bot]`, pushes `grumpycat/<id>` and reports a
 `FixOutcome` to Step Functions. A run that changes nothing is `declined` (with the report) and
 ends the execution; the GitHub output opens the draft PR on the `PR_OPEN` transition.
+
+## Outputs
+
+Outputs react to state transitions (`OutputPlugin.on_transition(state, previous, brief)`):
+
+| Transition | `github` | `slack` |
+|---|---|---|
+| `awaiting_approval` | — | message with **Open a fix PR / Dismiss** buttons (gated mode) |
+| page (any status, once) | — | post to `oncall_channel` |
+| `pr_open` (no PR yet) | open draft PR from the pushed branch, label | thread reply with the link |
+| `shepherding` (new push) | comment what was pushed; reply to + resolve the review threads it addressed; attach the engine report | thread reply |
+| `ready` | mark ready for review, request reviewers, comment | thread reply |
+| `needs_human` | `needs-human` label + reason | thread reply |
+| `rca_only` | — | summary with the reason |
+| `merged` / `closed` | — | thread reply |
+
+The input that reported the error gets a note with the PR link (`InputPlugin.annotate`)
+the first time a PR exists.

@@ -10,8 +10,8 @@ inputs:                            # plugin name → that plugin's own config
   datadog: { site: datadoghq.com }
 engines: {}                        # optional per-engine config; engines are also pulled in by repos.*.engine
 outputs:
-  github: {}
-  slack: { channel: "#grumpycat", oncall_channel: "#oncall" }
+  github: { draft: true, needs_human_label: needs-human, request_reviewers_on_ready: [] }
+  slack: { channel: C0123456, oncall_channel: C0654321 }   # channel ids; bot must be a member
 ci:                                # how to read the target repos' CI (one provider per deployment)
   provider: buildkite              # buildkite | github_actions | <any installed ci plugin>
   options: { org: acme }
@@ -36,3 +36,18 @@ reviewer_allowlist: [cursor[bot], some-human]
 ```
 
 Secrets and the worker image are **module inputs**, not part of this file.
+
+## Secrets the built-in plugins need
+
+| Plugin | Secret map keys |
+|---|---|
+| `sentry` | `SENTRY_WEBHOOK_SECRET`, `SENTRY_AUTH_TOKEN` |
+| `datadog` | `DD_WEBHOOK_TOKEN`, `DD_API_KEY`, `DD_APP_KEY` |
+| `claude` | `ANTHROPIC_API_KEY` (or `auth: bedrock` + task-role creds) |
+| `codex` | `OPENAI_API_KEY` |
+| `github` (and the worker) | `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`; the hook also needs `GITHUB_WEBHOOK_SECRET` |
+| `slack` | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` |
+| `buildkite` (ci) | `BUILDKITE_API_TOKEN` |
+
+Anything else in the map is passed through to the engine run as environment variables, for
+the repository's own skills and MCP servers.
