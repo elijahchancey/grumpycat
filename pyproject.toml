@@ -47,8 +47,11 @@ claude = "grumpycat.engines.claude:ClaudeEngine"
 codex = "grumpycat.engines.codex:CodexEngine"
 
 [project.entry-points."grumpycat.outputs"]
+github = "grumpycat.outputs.github:GitHubOutput"
+slack = "grumpycat.outputs.slack:SlackOutput"
 
 [project.entry-points."grumpycat.ci"]
+buildkite = "grumpycat.ci.buildkite:BuildkiteCI"
 
 [dependency-groups]
 dev = [

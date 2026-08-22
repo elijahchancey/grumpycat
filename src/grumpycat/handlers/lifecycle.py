@@ -46,6 +46,7 @@ def after_run(
     update: dict[str, Any] = {
         "attempts": attempt,
         "cost_usd": round(state.cost_usd + (outcome.cost_usd or 0.0), 4),
+        "last_outcome": outcome,
     }
     if outcome.status == "pr_open":
         update |= {
@@ -65,7 +66,19 @@ def after_run(
     else:
         update |= {"status": IssueStatus.NEEDS_HUMAN, "rationale": outcome.summary}
     state = rt.store.put(_notify(rt, state.model_copy(update=update), previous, brief))
+    if state.pr_url and not previous.pr_url:
+        _annotate_source(rt, state, f"grumpycat opened a draft PR: {state.pr_url}")
     return {"status": state.status, "fingerprint": fingerprint}
+
+
+def _annotate_source(rt: Runtime, state: IssueState, text: str) -> None:
+    plugin = rt.registry.inputs.get(state.event.source)
+    if plugin is None:
+        return
+    try:
+        plugin.annotate(state.event, state, text)
+    except Exception:
+        logger.exception("annotate failed", source=state.event.source)
 
 
 def finalize(rt: Runtime, fingerprint: str, outcome: str, reason: str | None) -> dict[str, Any]:

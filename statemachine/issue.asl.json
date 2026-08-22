@@ -123,7 +123,7 @@
       "Type": "Pass",
       "Assign": {
         "attempt": "{% $attempt + 1 %}",
-        "task": "{% $merge([$task, { \"kind\": \"shepherd\", \"pr_number\": $pr_number, \"trigger\": { \"ci_failure_log\": $states.input.event.ci_failure.excerpt, \"review_findings\": $states.input.event.findings, \"actor\": $states.input.event.actor } }]) %}",
+        "task": "{% $merge([$task, { \"kind\": \"shepherd\", \"pr_number\": $pr_number, \"trigger\": { \"ci_failure_log\": $states.input.event.ci_failure.excerpt, \"review_findings\": $states.input.event.findings, \"comment_ids\": $states.input.event.comment_ids, \"actor\": $states.input.event.actor } }]) %}",
         "ci_failure": "{% $states.input.event.ci_failure %}"
       },
       "Next": "Shepherd"

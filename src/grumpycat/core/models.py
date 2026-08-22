@@ -147,6 +147,9 @@ class ShepherdTrigger(_Model):
 
     ci_failure_log: str | None = None
     review_findings: list[str] = Field(default_factory=list)
+    comment_ids: list[int] = Field(
+        default_factory=list, description="Review-comment ids the findings came from"
+    )
     actor: str | None = None
 
 
@@ -191,6 +194,11 @@ class FixOutcome(_Model):
     branch: str | None = None
     summary: str = ""
     cost_usd: float | None = None
+    pushed_sha: str | None = None
+    addressed_comment_ids: list[int] = Field(
+        default_factory=list, description="Review comments this push responded to"
+    )
+    report: str | None = Field(default=None, description="GRUMPYCAT_REPORT.md, if written")
 
 
 class AwaitedEvent(_Model):
@@ -200,6 +208,7 @@ class AwaitedEvent(_Model):
     actor: str | None = None
     ci_failure: CIFailure | None = None
     findings: list[str] = Field(default_factory=list, description="Review/comment bodies")
+    comment_ids: list[int] = Field(default_factory=list)
     sha: str | None = None
     received_at: datetime
 
@@ -232,6 +241,9 @@ class IssueState(_Model):
     attempts: int = 0
     cost_usd: float = 0.0
     slack_thread_ts: str | None = None
+    paged: bool = False
     rationale: str | None = Field(default=None, description="Why RCA-only / needs-human")
+    brief: Brief | None = Field(default=None, description="Kept so approvals can start a run")
+    last_outcome: FixOutcome | None = None
     created_at: datetime
     updated_at: datetime

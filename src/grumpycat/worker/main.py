@@ -143,7 +143,11 @@ def outcome_for(task: WorkerTask, result: EngineResult, pushed_sha: str | None) 
     if pushed_sha is None:
         status = "declined" if (result.report or not result.raw.get("is_error")) else "failed"
         return FixOutcome(
-            status=status, summary=result.summary, cost_usd=result.cost_usd, branch=task.branch
+            status=status,
+            summary=result.summary,
+            cost_usd=result.cost_usd,
+            branch=task.branch,
+            report=result.report,
         )
     return FixOutcome(
         status="pushed",
@@ -151,6 +155,9 @@ def outcome_for(task: WorkerTask, result: EngineResult, pushed_sha: str | None) 
         cost_usd=result.cost_usd,
         branch=task.branch,
         pr_number=task.pr_number,
+        pushed_sha=pushed_sha,
+        addressed_comment_ids=list(task.trigger.comment_ids) if task.trigger else [],
+        report=result.report,
     )
 
 

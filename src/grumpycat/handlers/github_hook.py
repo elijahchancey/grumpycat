@@ -187,7 +187,14 @@ def handle(rt: Runtime, kind: str, p: dict[str, Any]) -> dict[str, Any]:
         if kind == "pull_request_review_comment" and comment.get("path"):
             line = comment.get("line") or comment.get("original_line") or "?"
             text = f"{comment['path']}:{line}\n{text}"
-        ev = AwaitedEvent(kind="comment", actor=login, findings=[text], received_at=now)
+        ids = (
+            [int(comment["id"])]
+            if kind == "pull_request_review_comment" and comment.get("id")
+            else []
+        )
+        ev = AwaitedEvent(
+            kind="comment", actor=login, findings=[text], comment_ids=ids, received_at=now
+        )
         return resume(rt, state, ev)
 
     if kind == "pull_request":

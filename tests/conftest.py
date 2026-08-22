@@ -160,7 +160,7 @@ def rt(
     rt = runtime_mod.Runtime(
         config=config, registry=Registry(config, secrets), store=store, sfn=sfn, lam=MagicMock()
     )
-    for mod in ("runtime", "router", "triage", "github_hook", "lifecycle"):
+    for mod in ("runtime", "router", "triage", "github_hook", "lifecycle", "slack_interactions"):
         monkeypatch.setattr(f"grumpycat.handlers.{mod}.runtime", lambda: rt)
     return rt
 
